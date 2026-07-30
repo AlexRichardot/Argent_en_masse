@@ -228,7 +228,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
 
 <div class="ac-pop" id="acpop"></div>
 <div class="menu-pop" id="menu-pop">
-  <button class="menu-item" data-menu="export" data-icon="download"><span>Sauvegarder</span></button>
+  <button class="menu-item" data-menu="export" data-icon="doc"><span>Exporter en fichier JSON</span></button>
   <button class="menu-item" data-menu="import" data-icon="upload"><span>Importer</span></button>
   <button class="menu-item" data-menu="sync" data-icon="cloud"><span>Synchronisation</span></button>
   <button class="menu-item" data-menu="tour" data-icon="sparkles"><span>Revoir le tutoriel</span></button>
@@ -793,7 +793,7 @@ document.getElementById('nav').addEventListener('click',e=>{const b=e.target.clo
 document.getElementById('owner-filter').addEventListener('click',e=>{const b=e.target.closest('button[data-owner]');if(b){state.ui.ownerFilter=b.dataset.owner;save();renderOwnerFilter();render();}});
 document.getElementById('bell').addEventListener('click',()=>setTab('reco'));
 document.getElementById('avatar').addEventListener('click',()=>{menuPop.classList.contains('on')?closeMenu():openMenuAt(document.getElementById('avatar'));});
-document.getElementById('sideSave').addEventListener('click',doExport);
+document.getElementById('sideSave').addEventListener('click',handleSaveClick);
 
 /* ===== Menu ===== */
 const menuTrigger=document.getElementById('menuTrigger'),menuPop=document.getElementById('menu-pop');
@@ -807,6 +807,10 @@ window.addEventListener('scroll',()=>{if(menuPop.classList.contains('on'))closeM
 /* ===== Reset / Toast / Export / Import ===== */
 async function doReset(){if(!confirm("Effacer toutes vos données ? Action définitive. Exportez une sauvegarde avant."))return;state=blankState();expanded.clear();try{await window.storage.delete(KEY);}catch(e){}save();renderOwnerFilter();setTab('overview');openWelcome();}
 let toastTimer=null;function toast(msg,isErr){const t=document.getElementById('toast');t.textContent=msg;t.classList.toggle('err',!!isErr);t.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('on'),2600);}
+async function handleSaveClick(){
+  if(syncCfg){await persistLocal();await pushRemote();toast(syncStatus==='ok'?'Sauvegardé en ligne ✓':'Échec de la sauvegarde en ligne — vérifiez la connexion',syncStatus!=='ok');}
+  else{doExport();}
+}
 function doExport(){try{const payload={app:'patrimoine-dashboard',version:3,exportedAt:new Date().toISOString(),state};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='patrimoine-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Sauvegarde téléchargée ✓');}catch(e){toast("Échec de l'export",true);}}
 function applyImported(raw){const data=JSON.parse(raw);const st=data&&data.state?data.state:data;if(!st||typeof st!=='object'||!Array.isArray(st.accounts))throw new Error('format non reconnu');state=st;['incomes','expenses','accounts','projects','savings'].forEach(k=>{if(!Array.isArray(state[k]))state[k]=[]});if(!state.ui)state.ui={};const du=blankState().ui;Object.keys(du).forEach(k=>{if(state.ui[k]===undefined)state.ui[k]=du[k]});state.accounts.forEach(a=>{if(a.bank===undefined)a.bank='';if(a.owner===undefined)a.owner='commun';if(isPosType(a.type)&&!Array.isArray(a.positions))a.positions=[];if(a.ratePct===undefined)a.ratePct=pctStr(defaultRate(a.type));});state.expenses.forEach(x=>{if(x.category===undefined)x.category='Autres';if(x.name===undefined)x.name='';if(x.owner===undefined)x.owner='commun';});state.incomes.forEach(x=>{if(x.owner===undefined)x.owner='commun';});state.savings.forEach(x=>{if(x.owner===undefined)x.owner='commun';});save();}
 function readImport(file,onOk,onErr){const rd=new FileReader();rd.onload=()=>{try{applyImported(rd.result);onOk&&onOk();}catch(err){onErr&&onErr(err);}};rd.readAsText(file);}
@@ -832,7 +836,7 @@ const TOUR_STEPS=[
  {tab:'flow',target:'#nav [data-tab="wealth"]',text:"Passons à votre épargne : cliquez sur « Épargne & patrimoine ».",expectTab:'wealth'},
  {tab:'wealth',target:'[data-add="accounts"]',text:"Ajoutez un compte d'épargne (livret, PEA, assurance-vie, immobilier…).",cond:()=>state.accounts.length>=1},
  {tab:'wealth',target:'#owner-filter',text:"Astuce : ce sélecteur filtre tout le tableau de bord par personne — Alex, Léa, ou vue commune.",btn:'Suivant'},
- {tab:'wealth',target:'#sideSave',text:"Et ici, vous sauvegardez vos données à tout moment (fichier .json).",btn:'Suivant'},
+ {tab:'wealth',target:'#sideSave',text:"Et ici, vous sauvegardez vos données à tout moment (en ligne si vous activez la synchronisation, sinon en fichier).",btn:'Suivant'},
  {tab:'wealth',target:'#nav [data-tab="overview"]',text:"Terminons : cliquez sur « Vue d'ensemble ».",expectTab:'overview'},
  {tab:'overview',center:true,title:'Tout est là ! 🎉',text:"La vue d'ensemble récapitule automatiquement ce que vous venez de saisir : patrimoine, montant disponible, échéances et répartition. À vous de jouer !",btn:'Terminer',finish:true}
 ];

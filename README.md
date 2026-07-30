@@ -35,9 +35,9 @@ npm run build
 ✅ Synchronisation des données avec Supabase
 ✅ Onglet Vue d'ensemble
 ✅ Onglet Revenus & dépenses (ajout simple)
-🚧 Onglet Épargne & patrimoine (dont PEA/CTO dépliables) — à porter
-🚧 Onglet Projets & échéances — à porter
-🚧 Onglet Recommandations — à porter
+✅ Onglet Épargne & patrimoine (dont PEA/CTO dépliables)
+✅ Onglet Projets & échéances
+✅ Onglet Recommandations
 🚧 Import de relevé bancaire — à porter
 🚧 Tutoriel de première utilisation — à porter
 🚧 Éditeur de fiche générique (pop-up) — à porter (actuellement formulaires simplifiés inline)

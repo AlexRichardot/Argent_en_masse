@@ -19,6 +19,8 @@ const PATHS = {
   download: '<path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   ext: '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  burger: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
 };
 
 export default function Icon({ name, size = 18 }) {

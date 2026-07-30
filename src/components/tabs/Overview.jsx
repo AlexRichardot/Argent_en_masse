@@ -87,11 +87,11 @@ export default function Overview({ ownerFilter }) {
               <tbody>
                 {rows.map((r, i) => (
                   <tr key={i}>
-                    <td style={{ fontWeight: 600 }}>{r.label}</td>
-                    <td>{r.bank ? (
+                    <td data-label="Compte" style={{ fontWeight: 600 }}>{r.label}</td>
+                    <td data-label="Banque">{r.bank ? (
                       <span className="cellbank"><BankLogo bankKey={r.bank} size={20} />{BANKS[r.bank]?.name || r.bank}</span>
                     ) : <span style={{ color: 'var(--muted)' }}>—</span>}</td>
-                    <td className="r amt">{eur0.format(r.val)}</td>
+                    <td data-label="Montant" className="r amt">{eur0.format(r.val)}</td>
                   </tr>
                 ))}
               </tbody>

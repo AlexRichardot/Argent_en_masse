@@ -117,20 +117,20 @@ export default function Projects({ ownerFilter }) {
                 const o = OWNERS[p.owner] || OWNERS.commun;
                 return (
                   <tr key={p.id} className="clickable" onClick={() => setEditingId(p.id)}>
-                    <td style={{ fontWeight: 600 }}>{p.label || 'Projet'}</td>
-                    <td>
+                    <td data-label="Projet" style={{ fontWeight: 600 }}>{p.label || 'Projet'}</td>
+                    <td data-label="Type">
                       <span className="pill" style={{ background: p.kind === 'objectif' ? '#EDE9FE' : '#E4F0FE', color: p.kind === 'objectif' ? '#7C3AED' : '#3B82F6' }}>
                         {p.kind === 'objectif' ? 'Objectif' : 'Échéance'}{p.recur && p.recur !== 'once' ? ' · récurrent' : ''}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Détenteur">
                       <span className="owner-chip" style={{ background: o.color + '18', color: o.color }}>
                         <span className="dot" style={{ background: o.color }} />{o.label}
                       </span>
                     </td>
-                    <td>{(nd.estimated ? '≈ ' : '') + fmtDate(nd.date)}</td>
-                    <td className="r amt">{eur0.format(n(p.amount))}</td>
-                    <td style={{ color: w.color, fontWeight: 600, fontSize: 12.5 }}>{w.txt}</td>
+                    <td data-label="Date estimée">{(nd.estimated ? '≈ ' : '') + fmtDate(nd.date)}</td>
+                    <td data-label="Montant" className="r amt">{eur0.format(n(p.amount))}</td>
+                    <td data-label="Échéance" style={{ color: w.color, fontWeight: 600, fontSize: 12.5 }}>{w.txt}</td>
                     <td><div className="rowact"><button className="iconbtn danger" onClick={(e) => { e.stopPropagation(); delProject(p.id); }}>×</button></div></td>
                   </tr>
                 );

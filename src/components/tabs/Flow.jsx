@@ -62,8 +62,8 @@ function IncomeRow({ item, onSave, onDelete }) {
   }
   return (
     <tr className="clickable" onClick={startEdit}>
-      <td style={{ fontWeight: 600 }}>{item.label}</td>
-      <td className="r amt" style={{ color: 'var(--emerald)' }}>{eur0.format(n(item.amount))}</td>
+      <td data-label="Source" style={{ fontWeight: 600 }}>{item.label}</td>
+      <td data-label="Montant / mois" className="r amt" style={{ color: 'var(--emerald)' }}>{eur0.format(n(item.amount))}</td>
       <td><div className="rowact"><button className="iconbtn danger" onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}>×</button></div></td>
     </tr>
   );
@@ -135,9 +135,9 @@ function ExpenseRow({ item, onSave, onDelete }) {
   const ci = catInfo(item.category);
   return (
     <tr className="clickable" onClick={startEdit}>
-      <td style={{ fontWeight: 600 }}>{item.name || item.category}</td>
-      <td><span className="pill" style={{ background: ci.color + '1a', color: ci.color }}><span className="dot" style={{ background: ci.color }} />{ci.key}</span></td>
-      <td className="r amt" style={{ color: 'var(--rose)' }}>{eur0.format(n(item.amount))}</td>
+      <td data-label="Dépense" style={{ fontWeight: 600 }}>{item.name || item.category}</td>
+      <td data-label="Catégorie"><span className="pill" style={{ background: ci.color + '1a', color: ci.color }}><span className="dot" style={{ background: ci.color }} />{ci.key}</span></td>
+      <td data-label="Montant / mois" className="r amt" style={{ color: 'var(--rose)' }}>{eur0.format(n(item.amount))}</td>
       <td><div className="rowact"><button className="iconbtn danger" onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}>×</button></div></td>
     </tr>
   );
@@ -210,13 +210,13 @@ function SavingRow({ item, accounts, onSave, onDelete }) {
   }
   return (
     <tr className="clickable" onClick={startEdit}>
-      <td style={{ fontWeight: 600 }}>
+      <td data-label="Destination" style={{ fontWeight: 600 }}>
         <span className="cellbank">
           {acc?.bank && <BankLogo bankKey={acc.bank} size={20} />}
           {acc ? (acc.label || TYPES[acc.type]?.label) : 'Compte supprimé'}
         </span>
       </td>
-      <td className="r amt" style={{ color: 'var(--violet)' }}>{eur0.format(n(item.amount))}</td>
+      <td data-label="Montant / mois" className="r amt" style={{ color: 'var(--violet)' }}>{eur0.format(n(item.amount))}</td>
       <td><div className="rowact"><button className="iconbtn danger" onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}>×</button></div></td>
     </tr>
   );

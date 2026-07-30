@@ -213,4 +213,14 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
   .pos-meta{padding-left:0}
   .choice-grid{grid-template-columns:1fr}
   .stmt-cand{grid-template-columns:auto 1fr}
+
+  /* Tableaux -> cartes empilées (colonnes illisibles sur petit écran) */
+  .ledger thead{display:none}
+  .ledger,.ledger tbody{display:block;width:100%}
+  .ledger tr{display:block}
+  .ledger tr:not(.posdetail){margin-bottom:10px;border:1px solid var(--line);border-radius:var(--rs);padding:2px 12px}
+  .ledger td{display:block;border-top:none;padding:7px 0}
+  .ledger td[data-label]{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .ledger td[data-label]::before{content:attr(data-label);font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;flex:none}
+  .ledger tr.posdetail td{padding:0}
 }

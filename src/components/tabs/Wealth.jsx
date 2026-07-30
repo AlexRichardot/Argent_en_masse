@@ -326,7 +326,7 @@ export default function Wealth({ ownerFilter }) {
                 return (
                   <Fragment key={a.id}>
                     <tr className="clickable" onClick={() => setFormMode(a.id)}>
-                      <td style={{ fontWeight: 600 }}>
+                      <td data-label="Intitulé" style={{ fontWeight: 600 }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                           {isP ? (
                             <button className={`caret ${open ? 'open' : ''}`} onClick={(e) => { e.stopPropagation(); toggleExpand(a.id); }}>›</button>
@@ -336,16 +336,16 @@ export default function Wealth({ ownerFilter }) {
                           {a.label || t.label}
                         </span>
                       </td>
-                      <td>{a.bank ? (
+                      <td data-label="Banque">{a.bank ? (
                         <span className="cellbank"><BankLogo bankKey={a.bank} size={20} />{BANKS[a.bank]?.name || a.bank}</span>
                       ) : <span style={{ color: 'var(--muted)' }}>—</span>}</td>
-                      <td>
+                      <td data-label="Type">
                         <span className="pill" style={{ background: TIERS[tier].color + '1a', color: TIERS[tier].color }}>
                           <span className="dot" style={{ background: TIERS[tier].color }} />{t.label}
                         </span>
                       </td>
-                      <td className="r amt">{eur0.format(accVal(a))}</td>
-                      <td className="r" style={{ color: 'var(--muted)' }}>{a.type === 'immobilier' ? '—' : (acctRate(a) ? pct(acctRate(a)) : '—')}</td>
+                      <td data-label="Montant" className="r amt">{eur0.format(accVal(a))}</td>
+                      <td data-label="Taux" className="r" style={{ color: 'var(--muted)' }}>{a.type === 'immobilier' ? '—' : (acctRate(a) ? pct(acctRate(a)) : '—')}</td>
                       <td>
                         <div className="rowact">
                           <button className="iconbtn danger" onClick={(e) => { e.stopPropagation(); setConfirmDelId(a.id); }}>×</button>

@@ -1,7 +1,9 @@
 import { useData } from '../../context/DataContext';
 import { computeMetrics, sortedAccounts, sortedProjects, accVal } from '../../lib/metrics';
-import { eur0, pct, eurC, fmtDate, whenLabel } from '../../lib/format';
-import { ASSET_GROUPS, TIERS, OWNERS } from '../../lib/catalogs';
+import { eur0, pct, fmtDate, whenLabel, n } from '../../lib/format';
+import { ASSET_GROUPS, TIERS, OWNERS, TYPES, BANKS } from '../../lib/catalogs';
+import BankLogo from '../BankLogo';
+import Icon from '../Icon';
 
 function Bars({ items, total }) {
   if (!items.length) return <div className="empty-note">Aucune donnée à afficher.</div>;
@@ -12,7 +14,7 @@ function Bars({ items, total }) {
         return (
           <div className="bar-row" key={c.label}>
             <div className="bar-lab">
-              <span className="bar-ic" style={{ background: c.color }} />
+              <span className="bar-ic" style={{ background: c.color }}><Icon name={c.icon} size={15} /></span>
               {c.label}
             </div>
             <div className="bar-track">
@@ -36,7 +38,7 @@ export default function Overview({ ownerFilter }) {
     .sort((a, b) => b.val - a.val);
 
   const rows = sortedAccounts(state, ownerFilter, 'val').map((a) => ({
-    label: a.label || a.type,
+    label: a.label || TYPES[a.type]?.label || a.type,
     bank: a.bank,
     val: accVal(a),
   }));
@@ -86,7 +88,9 @@ export default function Overview({ ownerFilter }) {
                 {rows.map((r, i) => (
                   <tr key={i}>
                     <td style={{ fontWeight: 600 }}>{r.label}</td>
-                    <td>{r.bank || <span style={{ color: 'var(--muted)' }}>—</span>}</td>
+                    <td>{r.bank ? (
+                      <span className="cellbank"><BankLogo bankKey={r.bank} size={20} />{BANKS[r.bank]?.name || r.bank}</span>
+                    ) : <span style={{ color: 'var(--muted)' }}>—</span>}</td>
                     <td className="r amt">{eur0.format(r.val)}</td>
                   </tr>
                 ))}
@@ -105,7 +109,9 @@ export default function Overview({ ownerFilter }) {
             const o = OWNERS[p.owner] || OWNERS.commun;
             return (
               <div className="ech-item" key={p.id}>
-                <div className="ech-ic" style={{ background: p.kind === 'objectif' ? '#7C3AED' : '#3B82F6' }} />
+                <div className="ech-ic" style={{ background: p.kind === 'objectif' ? '#7C3AED' : '#3B82F6' }}>
+                  <Icon name={p.kind === 'objectif' ? 'target' : 'calendar'} size={18} />
+                </div>
                 <div>
                   <div className="ech-t">
                     {p.label || 'Projet'}
@@ -116,7 +122,7 @@ export default function Overview({ ownerFilter }) {
                   <div className="ech-s">{(nd.estimated ? 'estimée ' : '') + fmtDate(nd.date)}</div>
                 </div>
                 <div className="ech-r">
-                  <div className="ech-amt">{eur0.format(p.amount)}</div>
+                  <div className="ech-amt">{eur0.format(n(p.amount))}</div>
                   <div className="ech-when" style={{ color: w.color }}>{w.txt}</div>
                 </div>
               </div>

@@ -24,10 +24,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    // on retire les suffixes type .PA/.AS/.DE avant d'interroger Twelve Data
-    const baseSymbol = symbol.replace(/\.(PA|AS|DE|L|MI|MC|BR)$/i, '');
-    let quoteUrl = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(baseSymbol)}&apikey=${apiKey}`;
-    if (exchange) quoteUrl += `&exchange=${encodeURIComponent(exchange)}`;
+    // Twelve Data reconnaît nativement les tickers suffixés (ex. "EWLD.PA", "ASML.AS") :
+    // on les envoie tels quels, sans le paramètre exchange qui attend un nom d'exchange
+    // précis (ex. "NASDAQ") et non un libellé libre (ex. "Euronext Paris") — un mauvais
+    // couple symbole/exchange fait échouer toute la requête, même pour un ticker valide.
+    const hasSuffix = /\./.test(symbol);
+    let quoteUrl = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbol)}&apikey=${apiKey}`;
+    if (exchange && !hasSuffix) quoteUrl += `&exchange=${encodeURIComponent(exchange)}`;
 
     const r = await fetch(quoteUrl);
     const data = await r.json();

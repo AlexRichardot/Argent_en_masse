@@ -1,38 +1,124 @@
-import { useState, Fragment } from 'react';
+import { useState, useRef, Fragment } from 'react';
 import { useData } from '../../context/DataContext';
 import { computeMetrics, sortedAccounts, accVal, acctRate, uid, newOwnerFor } from '../../lib/metrics';
-import { eur0, pct } from '../../lib/format';
-import { TYPES, TIERS, BANKS, OWNERS, isPosType, defaultRate } from '../../lib/catalogs';
-import { n, pctStr } from '../../lib/format';
+import { eur0, pct, n, pctStr } from '../../lib/format';
+import { TYPES, TIERS, BANKS, OWNERS, SECURITIES, isPosType, defaultRate } from '../../lib/catalogs';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../lib/supabaseClient';
+import BankLogo from '../BankLogo';
+import Confirm from '../Confirm';
+import Icon from '../Icon';
+
+function matchSecurities(q) {
+  const s = q.trim().toLowerCase();
+  if (!s) return SECURITIES.slice(0, 8);
+  return SECURITIES.filter((x) => x.n.toLowerCase().includes(s) || x.t.toLowerCase().includes(s)).slice(0, 8);
+}
+
+async function fetchQuote(pos, onUpdate) {
+  if (!pos.ticker) { onUpdate({ ...pos, err: 'Indiquez un titre référencé (ticker)' }); return; }
+  onUpdate({ ...pos, loading: true, err: '' });
+  try {
+    const params = new URLSearchParams({ symbol: pos.ticker });
+    if (pos.x) params.set('exchange', pos.x);
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/quote?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY },
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+    const price = Number(data.price_eur ?? data.price_native);
+    if (!isFinite(price) || price <= 0) throw new Error('cours introuvable');
+    onUpdate({ ...pos, price: Math.round(price * 100) / 100, cur: data.currency || 'EUR', native: Number(data.price_native) || price, asof: data.asof || new Date().toISOString().slice(0, 10), err: '', loading: false });
+  } catch (e) {
+    onUpdate({ ...pos, err: `Cours auto indisponible (${e.message || 'erreur'})`, loading: false });
+  }
+}
+
+function SecurityField({ pos, onChange }) {
+  const [open, setOpen] = useState(false);
+  const blurTimer = useRef(null);
+  const matches = matchSecurities(pos.name || '');
+
+  function pick(sec) {
+    const next = { ...pos, name: sec.n, ticker: sec.t, kind: sec.k, x: sec.x };
+    onChange(next);
+    setOpen(false);
+    fetchQuote(next, onChange);
+  }
+
+  return (
+    <div className="field" style={{ position: 'relative' }}>
+      <label>Titre</label>
+      <input className="inp" value={pos.name || ''} placeholder="Ex. Microsoft" autoComplete="off"
+        onChange={(e) => { onChange({ ...pos, name: e.target.value, ticker: '' }); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => { blurTimer.current = setTimeout(() => setOpen(false), 150); }} />
+      {open && matches.length > 0 && (
+        <div className="ac-pop on" style={{ position: 'absolute', top: '100%', left: 0, width: 280 }}>
+          {matches.map((sec) => (
+            <div key={sec.t} className="ac-item" onMouseDown={(e) => { e.preventDefault(); clearTimeout(blurTimer.current); pick(sec); }}>
+              <span className="tk">{sec.t}</span>
+              <span><span className="nm">{sec.n}</span> <span className="mx">{sec.x}</span></span>
+              {sec.pea && <span className="pe">PEA</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function PositionRow({ pos, onChange, onRemove }) {
+  let meta = [];
+  if (pos.ticker) meta.push(<b key="tk" style={{ color: 'var(--ink2)' }}>{pos.ticker}</b>);
+  if (pos.x) meta.push(pos.x);
+  if (pos.asof) meta.push(`cours au ${pos.asof}`);
+  const metaText = meta.length > 0;
+  const searchTerm = pos.name || pos.ticker;
+  const searchUrl = searchTerm
+    ? `https://www.google.com/search?q=${encodeURIComponent(searchTerm + ' cours bourse')}`
+    : null;
+
   return (
-    <div className="pos-row">
-      <div className="kind-seg">
-        {['action', 'etf'].map((k) => (
-          <button key={k} type="button" className={(pos.kind || 'action') === k ? 'on' : ''}
-            onClick={() => onChange({ ...pos, kind: k })}>
-            {k === 'action' ? 'Action' : 'ETF'}
-          </button>
-        ))}
+    <>
+      <div className="pos-row">
+        <div className="kind-seg">
+          {['action', 'etf'].map((k) => (
+            <button key={k} type="button" className={(pos.kind || 'action') === k ? 'on' : ''}
+              onClick={() => onChange({ ...pos, kind: k })}>
+              {k === 'action' ? 'Action' : 'ETF'}
+            </button>
+          ))}
+        </div>
+        <SecurityField pos={pos} onChange={onChange} />
+        <div className="field">
+          <label>Qté</label>
+          <input className="inp num" inputMode="decimal" value={pos.shares ?? ''} placeholder="0"
+            onChange={(e) => onChange({ ...pos, shares: e.target.value })} />
+        </div>
+        <div className="field">
+          <label>Cours (€)</label>
+          <input className="inp num" inputMode="decimal" value={pos.price ?? ''} placeholder="0" disabled={pos.loading}
+            onChange={(e) => onChange({ ...pos, price: e.target.value })} />
+        </div>
+        {pos.loading ? (
+          <button className="refresh" disabled type="button"><span className="spin" /></button>
+        ) : (
+          <button className="refresh" type="button" title="Récupérer le cours" onClick={() => fetchQuote(pos, onChange)}>↻</button>
+        )}
+        <button className="remove" type="button" onClick={onRemove}>×</button>
       </div>
-      <div className="field">
-        <label>Titre</label>
-        <input className="inp" value={pos.name || ''} placeholder="Ex. Microsoft"
-          onChange={(e) => onChange({ ...pos, name: e.target.value })} />
-      </div>
-      <div className="field">
-        <label>Qté</label>
-        <input className="inp num" inputMode="decimal" value={pos.shares ?? ''} placeholder="0"
-          onChange={(e) => onChange({ ...pos, shares: e.target.value })} />
-      </div>
-      <div className="field">
-        <label>Cours (€)</label>
-        <input className="inp num" inputMode="decimal" value={pos.price ?? ''} placeholder="0"
-          onChange={(e) => onChange({ ...pos, price: e.target.value })} />
-      </div>
-      <button className="remove" type="button" onClick={onRemove}>×</button>
-    </div>
+      {(metaText || pos.err || searchUrl) && (
+        <div className="pos-meta">
+          {meta.reduce((acc, cur, i) => (i === 0 ? [cur] : [...acc, ' · ', cur]), [])}
+          {pos.err && <span className="err">{meta.length ? ' · ' : ''}{pos.err}</span>}
+          {searchUrl && (
+            <a className="link-out" href={searchUrl} target="_blank" rel="noopener" style={{ marginLeft: 6 }}>
+              <Icon name="ext" size={12} /> voir le cours
+            </a>
+          )}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -72,16 +158,17 @@ function AccountPositions({ acc, updateAccount }) {
   );
 }
 
-function AccountForm({ ownerFilter, onAdd }) {
-  const [label, setLabel] = useState('');
-  const [type, setType] = useState('livret_a');
-  const [bank, setBank] = useState('');
-  const [owner, setOwner] = useState(newOwnerFor(ownerFilter));
-  const [balance, setBalance] = useState('');
-  const [ratePct, setRatePct] = useState(pctStr(defaultRate('livret_a')));
-  const [mortgage, setMortgage] = useState('');
-  const [shareOwn, setShareOwn] = useState('100');
-  const [shareDebt, setShareDebt] = useState('100');
+function AccountForm({ ownerFilter, editing, onSave, onCancel }) {
+  const rec = editing || {};
+  const [label, setLabel] = useState(rec.label || '');
+  const [type, setType] = useState(rec.type || 'livret_a');
+  const [bank, setBank] = useState(rec.bank || '');
+  const [owner, setOwner] = useState(rec.owner || newOwnerFor(ownerFilter));
+  const [balance, setBalance] = useState(rec.balance ?? '');
+  const [ratePct, setRatePct] = useState(rec.ratePct ?? pctStr(defaultRate(rec.type || 'livret_a')));
+  const [mortgage, setMortgage] = useState(rec.mortgage ?? '');
+  const [shareOwn, setShareOwn] = useState(rec.shareOwn ?? '100');
+  const [shareDebt, setShareDebt] = useState(rec.shareDebt ?? '100');
 
   function changeType(t) {
     setType(t);
@@ -90,21 +177,20 @@ function AccountForm({ ownerFilter, onAdd }) {
 
   function submit() {
     if (!type) return;
-    const acc = { id: uid(), label, type, bank, owner };
+    const acc = { id: editing ? editing.id : uid(), label, type, bank, owner };
     if (type === 'immobilier') {
       acc.balance = balance; acc.mortgage = mortgage; acc.shareOwn = shareOwn; acc.shareDebt = shareDebt;
     } else if (isPosType(type)) {
-      acc.positions = [];
+      acc.positions = editing?.positions || [];
     } else {
       acc.balance = balance; acc.ratePct = ratePct;
     }
-    onAdd(acc);
-    setLabel(''); setBalance(''); setMortgage('');
+    onSave(acc);
   }
 
   return (
-    <div className="card" style={{ marginBottom: 18 }}>
-      <h3>Ajouter un compte</h3>
+    <div className="card" style={{ marginBottom: 18, background: '#FBFAFF' }}>
+      <h3>{editing ? 'Modifier le compte' : 'Ajouter une épargne'}</h3>
       <p className="hint">Livret, PEA, assurance-vie, immobilier…</p>
       <div className="field" style={{ marginBottom: 12 }}>
         <label>Intitulé</label>
@@ -170,7 +256,10 @@ function AccountForm({ ownerFilter, onAdd }) {
           </div>
         </div>
       )}
-      <button className="btn primary" onClick={submit}>Ajouter</button>
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button className="btn primary" onClick={submit}>{editing ? 'Enregistrer' : 'Ajouter'}</button>
+        <button className="btn ghost" onClick={onCancel}>Annuler</button>
+      </div>
     </div>
   );
 }
@@ -180,12 +269,20 @@ export default function Wealth({ ownerFilter }) {
   const m = computeMetrics(state, ownerFilter);
   const accounts = sortedAccounts(state, ownerFilter, 'val');
   const [expanded, setExpanded] = useState(() => new Set());
+  const [formMode, setFormMode] = useState(null); // null | 'new' | accountId
+  const [confirmDelId, setConfirmDelId] = useState(null);
 
-  function addAccount(acc) {
-    updateState((prev) => ({ ...prev, accounts: [...prev.accounts, acc] }));
+  function saveAccount(acc) {
+    updateState((prev) => {
+      const exists = prev.accounts.some((a) => a.id === acc.id);
+      return { ...prev, accounts: exists ? prev.accounts.map((a) => (a.id === acc.id ? acc : a)) : [...prev.accounts, acc] };
+    });
+    setFormMode(null);
   }
   function delAccount(id) {
     updateState((prev) => ({ ...prev, accounts: prev.accounts.filter((a) => a.id !== id) }));
+    setConfirmDelId(null);
+    if (formMode === id) setFormMode(null);
   }
   function updateAccount(next) {
     updateState((prev) => ({ ...prev, accounts: prev.accounts.map((a) => (a.id === next.id ? next : a)) }));
@@ -198,12 +295,21 @@ export default function Wealth({ ownerFilter }) {
     });
   }
 
+  const editingRecord = formMode && formMode !== 'new' ? accounts.find((a) => a.id === formMode) : null;
+
   return (
     <>
-      <AccountForm ownerFilter={ownerFilter} onAdd={addAccount} />
       <div className="card">
-        <div className="toolbar"><h3 style={{ margin: 0 }}>Comptes & enveloppes</h3></div>
-        <p className="hint" style={{ margin: '4px 0 14px' }}>La flèche déplie les titres d'un PEA/CTO.</p>
+        <div className="toolbar">
+          <h3 style={{ margin: 0 }}>Comptes & enveloppes</h3>
+          <div className="sp" />
+          {!formMode && <button className="btn primary" onClick={() => setFormMode('new')}>+ Ajouter une épargne</button>}
+        </div>
+        <p className="hint" style={{ margin: '4px 0 14px' }}>Cliquez une ligne pour la modifier ; la flèche déplie les titres d'un PEA/CTO.</p>
+        {formMode && (
+          <AccountForm key={formMode} ownerFilter={ownerFilter} editing={editingRecord}
+            onSave={saveAccount} onCancel={() => setFormMode(null)} />
+        )}
         {accounts.length ? (
           <table className="ledger">
             <thead>
@@ -219,14 +325,20 @@ export default function Wealth({ ownerFilter }) {
                 const tier = t.tier;
                 return (
                   <Fragment key={a.id}>
-                    <tr>
+                    <tr className="clickable" onClick={() => setFormMode(a.id)}>
                       <td style={{ fontWeight: 600 }}>
-                        {isP && (
-                          <button className={`caret ${open ? 'open' : ''}`} onClick={() => toggleExpand(a.id)}>›</button>
-                        )}
-                        {a.label || t.label}
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          {isP ? (
+                            <button className={`caret ${open ? 'open' : ''}`} onClick={(e) => { e.stopPropagation(); toggleExpand(a.id); }}>›</button>
+                          ) : (
+                            <span style={{ width: 22, height: 22, marginRight: 4, display: 'inline-block' }} />
+                          )}
+                          {a.label || t.label}
+                        </span>
                       </td>
-                      <td>{a.bank ? (BANKS[a.bank]?.name || a.bank) : <span style={{ color: 'var(--muted)' }}>—</span>}</td>
+                      <td>{a.bank ? (
+                        <span className="cellbank"><BankLogo bankKey={a.bank} size={20} />{BANKS[a.bank]?.name || a.bank}</span>
+                      ) : <span style={{ color: 'var(--muted)' }}>—</span>}</td>
                       <td>
                         <span className="pill" style={{ background: TIERS[tier].color + '1a', color: TIERS[tier].color }}>
                           <span className="dot" style={{ background: TIERS[tier].color }} />{t.label}
@@ -234,11 +346,15 @@ export default function Wealth({ ownerFilter }) {
                       </td>
                       <td className="r amt">{eur0.format(accVal(a))}</td>
                       <td className="r" style={{ color: 'var(--muted)' }}>{a.type === 'immobilier' ? '—' : (acctRate(a) ? pct(acctRate(a)) : '—')}</td>
-                      <td><div className="rowact"><button className="iconbtn danger" onClick={() => delAccount(a.id)}>×</button></div></td>
+                      <td>
+                        <div className="rowact">
+                          <button className="iconbtn danger" onClick={(e) => { e.stopPropagation(); setConfirmDelId(a.id); }}>×</button>
+                        </div>
+                      </td>
                     </tr>
                     {isP && open && (
                       <tr className="posdetail">
-                        <td colSpan={6}>
+                        <td colSpan={6} onClick={(e) => e.stopPropagation()}>
                           <AccountPositions acc={a} updateAccount={updateAccount} />
                         </td>
                       </tr>
@@ -254,6 +370,14 @@ export default function Wealth({ ownerFilter }) {
           <span className="amt" style={{ color: 'var(--violet)' }}>{eur0.format(m.patrimoine)}</span>
         </div>
       </div>
+      {confirmDelId && (
+        <Confirm
+          title="Supprimer ce compte ?"
+          message="Cette action est définitive."
+          onConfirm={() => delAccount(confirmDelId)}
+          onCancel={() => setConfirmDelId(null)}
+        />
+      )}
     </>
   );
 }

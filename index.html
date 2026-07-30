@@ -218,7 +218,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
     <header class="topbar">
       <div class="greet"><h2 id="greet-h">Bonjour&nbsp;👋</h2><p>Voici l'état de votre patrimoine aujourd'hui.</p></div>
       <div class="owner-filter" id="owner-filter"></div>
-      <button class="sync-pill" id="sync-pill" title="Synchronisation"><span class="sync-dot" id="sync-dot"></span><span id="sync-label">Non synchronisé</span></button>
+      <button class="sync-pill" id="sync-pill" title="Mon compte"><span class="sync-dot" id="sync-dot"></span><span id="sync-label">Non connecté</span></button>
       <button class="icon-btn" id="bell" data-icon="bell" title="Recommandations prioritaires"><span class="badge hidden" id="bell-badge">0</span></button>
       <button class="avatar" id="avatar" title="Menu">A</button>
     </header>
@@ -230,7 +230,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
 <div class="menu-pop" id="menu-pop">
   <button class="menu-item" data-menu="export" data-icon="doc"><span>Exporter en fichier JSON</span></button>
   <button class="menu-item" data-menu="import" data-icon="upload"><span>Importer</span></button>
-  <button class="menu-item" data-menu="sync" data-icon="cloud"><span>Synchronisation</span></button>
+  <button class="menu-item" data-menu="sync" data-icon="cloud"><span>Mon compte</span></button>
   <button class="menu-item" data-menu="tour" data-icon="sparkles"><span>Revoir le tutoriel</span></button>
   <div class="menu-sep"></div>
   <button class="menu-item danger" data-menu="reset" data-icon="reset"><span>Réinitialiser</span></button>
@@ -252,30 +252,25 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
   <div class="foot" id="stmt-foot1"><button class="btn ghost" id="stmt-close" type="button">Fermer</button></div>
 </div></div>
 
-<div class="overlay" id="sync-overlay"><div class="modal wide">
-  <h2>Synchronisation avec Léa</h2>
-  <p class="lead">Connectez ce tableau de bord à un projet Supabase gratuit pour partager vos données entre vos deux ordinateurs. <a class="link-out" href="https://supabase.com" target="_blank" rel="noopener">supabase.com ↗</a></p>
+<div class="overlay" id="sync-overlay"><div class="modal">
+  <h2>Mon compte</h2>
+  <p class="lead">Connectez-vous pour retrouver vos données sur n'importe quel appareil. Utilisez le même email et mot de passe sur l'ordinateur de Léa.</p>
   <div id="sync-setup">
-    <div class="field"><label>URL du projet Supabase</label><input class="inp" id="sy-url" placeholder="https://xxxx.supabase.co"></div>
-    <div class="field"><label>Clé publique (anon)</label><input class="inp" id="sy-key" placeholder="eyJhbGciOi..."></div>
-    <div class="field"><label>Code de foyer (secret partagé avec Léa)</label><input class="inp" id="sy-hh" placeholder="une phrase longue et unique, ex. licorne-violette-27-marseille"></div>
-    <p class="hint" style="margin:6px 0 0">Ce code protège vos données : choisissez-en un long et unique, connu de vous deux seulement. Une fois connecté, exportez la configuration pour que Léa l'importe sans tout retaper.</p>
-    <div class="foot"><button class="btn primary" id="sy-connect" type="button">Se connecter</button><button class="btn ghost" id="sync-close" type="button">Fermer</button></div>
+    <div class="field"><label>Email</label><input class="inp" id="ac-email" type="email" placeholder="foyer@exemple.fr" autocomplete="username"></div>
+    <div class="field"><label>Mot de passe</label><input class="inp" id="ac-pass" type="password" placeholder="6 caractères minimum" autocomplete="current-password"></div>
+    <div class="foot"><button class="btn primary" id="ac-signin" type="button">Se connecter</button><button class="btn soft" id="ac-signup" type="button">Créer un compte</button></div>
+    <div class="foot" style="margin-top:6px"><button class="btn ghost" id="sync-close" type="button">Fermer</button></div>
   </div>
   <div id="sync-connected" class="hidden">
     <div class="summary-card" style="margin-bottom:16px">
-      <div class="blk"><div class="k">Statut</div><div class="v" id="sy-status" style="font-size:16px">—</div></div>
+      <div class="blk"><div class="k">Connecté</div><div class="v" id="sy-status" style="font-size:16px">—</div></div>
       <div class="blk" style="text-align:right"><div class="k">Dernière synchro</div><div class="v" id="sy-last" style="font-size:16px">—</div></div>
     </div>
     <div class="foot" style="margin-top:0">
       <button class="btn soft" id="sy-refresh" type="button" data-icon="refresh">Actualiser maintenant</button>
-      <button class="btn soft" id="sy-export-cfg" type="button">Exporter la config pour Léa</button>
       <button class="btn ghost" id="sy-disconnect" type="button">Se déconnecter</button>
     </div>
     <div class="foot"><button class="btn ghost" id="sync-close2" type="button">Fermer</button></div>
-  </div>
-  <div id="sync-import-row" style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
-    <label class="dropzone" data-icon="upload" style="padding:16px"><span>Importer une configuration reçue (.json)</span><input type="file" id="sy-import-file" accept="application/json,.json" style="display:none"></label>
   </div>
   <div id="sy-msg" style="font-size:12.5px;color:var(--muted);text-align:center;min-height:16px;margin-top:10px"></div>
 </div></div>
@@ -469,7 +464,7 @@ async function loadState(){
   normalizeState();
 }
 async function persistLocal(){const ok=await diskSet(KEY,JSON.stringify(state));memoryOnly=!ok;}
-async function persist(){await persistLocal();if(syncCfg)pushRemote();}
+async function persist(){await persistLocal();if(session)pushRemote();}
 const save=()=>{clearTimeout(saveTimer);saveTimer=setTimeout(persist,300);};
 
 /* ===== Helpers ===== */
@@ -808,7 +803,7 @@ window.addEventListener('scroll',()=>{if(menuPop.classList.contains('on'))closeM
 async function doReset(){if(!confirm("Effacer toutes vos données ? Action définitive. Exportez une sauvegarde avant."))return;state=blankState();expanded.clear();try{await window.storage.delete(KEY);}catch(e){}save();renderOwnerFilter();setTab('overview');openWelcome();}
 let toastTimer=null;function toast(msg,isErr){const t=document.getElementById('toast');t.textContent=msg;t.classList.toggle('err',!!isErr);t.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('on'),2600);}
 async function handleSaveClick(){
-  if(syncCfg){await persistLocal();await pushRemote();toast(syncStatus==='ok'?'Sauvegardé en ligne ✓':'Échec de la sauvegarde en ligne — vérifiez la connexion',syncStatus!=='ok');}
+  if(session){await persistLocal();await pushRemote();toast(syncStatus==='ok'?'Sauvegardé en ligne ✓':'Échec de la sauvegarde en ligne — vérifiez la connexion',syncStatus!=='ok');}
   else{doExport();}
 }
 function doExport(){try{const payload={app:'patrimoine-dashboard',version:3,exportedAt:new Date().toISOString(),state};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='patrimoine-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Sauvegarde téléchargée ✓');}catch(e){toast("Échec de l'export",true);}}
@@ -868,27 +863,49 @@ document.getElementById('tour-skip').addEventListener('click',endTour);
 window.addEventListener('resize',()=>{if(tour.on&&!document.getElementById('tour').classList.contains('hidden'))positionTour(TOUR_STEPS[tour.i]);});
 window.addEventListener('scroll',()=>{if(tour.on&&!document.getElementById('tour').classList.contains('hidden'))positionTour(TOUR_STEPS[tour.i]);},true);
 
-/* ===== Synchronisation (Supabase) ===== */
-const SYNC_KEY='patrimoine_sync_cfg';
-let syncCfg=null,syncStatus='off',syncErrMsg='',syncLastAt=null,syncLastAppliedAt=0,syncPollTimer=null;
-async function loadSyncCfg(){const raw=await diskGet(SYNC_KEY);syncCfg=raw?JSON.parse(raw):null;}
-async function saveSyncCfgToDisk(){await diskSet(SYNC_KEY,JSON.stringify(syncCfg));}
-async function clearSyncCfg(){syncCfg=null;await diskDel(SYNC_KEY);}
-function sbBase(){return syncCfg.url.replace(/\/+$/,'')+'/rest/v1/household_state';}
-function sbHeaders(extra){return Object.assign({'apikey':syncCfg.anonKey,'Authorization':'Bearer '+syncCfg.anonKey,'Content-Type':'application/json'},extra||{});}
+/* ===== Compte (Supabase Auth) ===== */
+const SUPABASE_URL='https://oqfygqzlkfdluybokyyo.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xZnlncXpsa2ZkbHV5Ym9reXlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzOTI1MTYsImV4cCI6MjEwMDk2ODUxNn0.K9W5Bw-E5vK001_H7MNpFHddzELkRGI5xHeRniDc3SQ';
+const AUTH_KEY='patrimoine_auth_session';
+let session=null,syncStatus='off',syncErrMsg='',syncLastAt=null,syncLastAppliedAt=0,syncPollTimer=null;
+async function loadSession(){const raw=await diskGet(AUTH_KEY);session=raw?JSON.parse(raw):null;}
+async function saveSession(){await diskSet(AUTH_KEY,JSON.stringify(session));}
+async function clearSession(){session=null;await diskDel(AUTH_KEY);}
 function anyOverlayOpen(){return ['rec-overlay','stmt-overlay','sync-overlay','welcome-overlay'].some(id=>{const el=document.getElementById(id);return el&&el.classList.contains('on');});}
 function setSyncStatus(s,msg){syncStatus=s;syncErrMsg=msg||'';updateSyncUI();}
 function updateSyncUI(){
   const dot=document.getElementById('sync-dot'),label=document.getElementById('sync-label');
-  if(dot&&label){if(!syncCfg){dot.className='sync-dot';label.textContent='Non synchronisé';}else if(syncStatus==='ok'){dot.className='sync-dot ok';label.textContent='Synchronisé';}else if(syncStatus==='err'){dot.className='sync-dot err';label.textContent='Erreur de synchro';}else{dot.className='sync-dot pending';label.textContent='Synchronisation…';}}
+  if(dot&&label){if(!session){dot.className='sync-dot';label.textContent='Non connecté';}else if(syncStatus==='ok'){dot.className='sync-dot ok';label.textContent='Synchronisé';}else if(syncStatus==='err'){dot.className='sync-dot err';label.textContent='Erreur de synchro';}else{dot.className='sync-dot pending';label.textContent='Synchronisation…';}}
   const st=document.getElementById('sy-status'),lt=document.getElementById('sy-last');
-  if(st)st.textContent=!syncCfg?'Non connecté':(syncStatus==='ok'?'Connecté ✓':(syncStatus==='err'?'Erreur : '+(syncErrMsg||'inconnue'):'…'));
+  if(st)st.textContent=session?(session.user&&session.user.email?session.user.email:'Connecté ✓'):'Non connecté';
   if(lt)lt.textContent=syncLastAt?new Intl.DateTimeFormat('fr-FR',{hour:'2-digit',minute:'2-digit'}).format(syncLastAt):'—';
 }
+/* --- authentification --- */
+async function authRequest(path,body){
+  const r=await fetch(SUPABASE_URL+path,{method:'POST',headers:{'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(data.error_description||data.msg||data.error||('HTTP '+r.status));
+  return data;
+}
+function applyAuthResponse(data){
+  if(!data.access_token)throw new Error("Compte créé, mais vérification d'email requise côté Supabase (désactivez « Confirm email » dans Authentication → Providers → Email).");
+  session={access_token:data.access_token,refresh_token:data.refresh_token,expires_at:Date.now()+((data.expires_in||3600)*1000),user:{id:data.user.id,email:data.user.email}};
+}
+async function ensureFreshToken(){
+  if(!session)return;
+  if(session.expires_at-Date.now()>60000)return;
+  try{const data=await authRequest('/auth/v1/token?grant_type=refresh_token',{refresh_token:session.refresh_token});applyAuthResponse(data);await saveSession();}
+  catch(e){await clearSession();setSyncStatus('err','session expirée, reconnectez-vous');}
+}
+async function signUp(email,password){const data=await authRequest('/auth/v1/signup',{email,password});applyAuthResponse(data);await saveSession();}
+async function signIn(email,password){const data=await authRequest('/auth/v1/token?grant_type=password',{email,password});applyAuthResponse(data);await saveSession();}
+/* --- synchro des données --- */
+function sbHeaders(extra){return Object.assign({'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+(session?session.access_token:SUPABASE_ANON_KEY),'Content-Type':'application/json'},extra||{});}
 async function pullRemote(silent){
-  if(!syncCfg)return;
+  if(!session)return;
+  await ensureFreshToken();if(!session)return;
   try{
-    const r=await fetch(sbBase()+'?household=eq.'+encodeURIComponent(syncCfg.household)+'&select=data,updated_at',{headers:sbHeaders()});
+    const r=await fetch(SUPABASE_URL+'/rest/v1/household_state?select=data,updated_at',{headers:sbHeaders()});
     if(!r.ok)throw new Error('HTTP '+r.status);
     const rows=await r.json();
     if(Array.isArray(rows)&&rows.length){
@@ -899,22 +916,24 @@ async function pullRemote(silent){
   }catch(e){setSyncStatus('err',e.message);}
 }
 async function pushRemote(){
-  if(!syncCfg)return;
+  if(!session)return;
+  await ensureFreshToken();if(!session)return;
   try{
     const nowIso=new Date().toISOString();
-    const r=await fetch(sbBase(),{method:'POST',headers:sbHeaders({'Prefer':'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify([{household:syncCfg.household,data:state,updated_at:nowIso}])});
+    const r=await fetch(SUPABASE_URL+'/rest/v1/household_state',{method:'POST',headers:sbHeaders({'Prefer':'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify([{user_id:session.user.id,data:state,updated_at:nowIso}])});
     if(!r.ok)throw new Error('HTTP '+r.status);
     syncLastAppliedAt=new Date(nowIso).getTime();syncLastAt=new Date();setSyncStatus('ok');
   }catch(e){setSyncStatus('err',e.message);}
 }
-function startSyncPoll(){clearInterval(syncPollTimer);if(!syncCfg)return;syncPollTimer=setInterval(()=>{if(document.visibilityState==='visible'&&!anyOverlayOpen())pullRemote(true);},20000);}
+function startSyncPoll(){clearInterval(syncPollTimer);if(!session)return;syncPollTimer=setInterval(()=>{if(document.visibilityState==='visible'&&!anyOverlayOpen())pullRemote(true);},20000);}
+/* --- interface --- */
 const syncOverlay=document.getElementById('sync-overlay');
 function openSyncModal(){
   document.getElementById('sy-msg').textContent='';
-  const isCfg=!!syncCfg;
-  document.getElementById('sync-setup').classList.toggle('hidden',isCfg);
-  document.getElementById('sync-connected').classList.toggle('hidden',!isCfg);
-  if(!isCfg){document.getElementById('sy-url').value='';document.getElementById('sy-key').value='';document.getElementById('sy-hh').value='';}
+  const isIn=!!session;
+  document.getElementById('sync-setup').classList.toggle('hidden',isIn);
+  document.getElementById('sync-connected').classList.toggle('hidden',!isIn);
+  if(!isIn){document.getElementById('ac-email').value='';document.getElementById('ac-pass').value='';}
   updateSyncUI();syncOverlay.classList.add('on');
 }
 function closeSyncModal(){syncOverlay.classList.remove('on');}
@@ -922,42 +941,37 @@ document.getElementById('sync-pill').addEventListener('click',openSyncModal);
 document.getElementById('sync-close').addEventListener('click',closeSyncModal);
 document.getElementById('sync-close2').addEventListener('click',closeSyncModal);
 syncOverlay.addEventListener('click',e=>{if(e.target===syncOverlay)closeSyncModal();});
-async function connectSync(cfg){
-  syncCfg=cfg;await saveSyncCfgToDisk();setSyncStatus('pending');await pullRemote();startSyncPoll();
-  document.getElementById('sync-setup').classList.add('hidden');document.getElementById('sync-connected').classList.remove('hidden');
-}
-document.getElementById('sy-connect').addEventListener('click',async()=>{
-  const url=document.getElementById('sy-url').value.trim(),key=document.getElementById('sy-key').value.trim(),hh=document.getElementById('sy-hh').value.trim();
-  if(!url||!key||!hh){document.getElementById('sy-msg').innerHTML='<span style="color:var(--rose)">Merci de remplir les 3 champs.</span>';return;}
-  await connectSync({url,anonKey:key,household:hh});
-  toast(syncStatus==='ok'?'Connecté ✓':'Connexion en erreur — vérifiez les informations');
+async function afterAuthSuccess(){setSyncStatus('pending');await pullRemote();startSyncPoll();document.getElementById('sync-setup').classList.add('hidden');document.getElementById('sync-connected').classList.remove('hidden');}
+document.getElementById('ac-signin').addEventListener('click',async()=>{
+  const email=document.getElementById('ac-email').value.trim(),pass=document.getElementById('ac-pass').value;
+  if(!email||!pass){document.getElementById('sy-msg').innerHTML='<span style="color:var(--rose)">Merci de remplir email et mot de passe.</span>';return;}
+  document.getElementById('sy-msg').textContent='Connexion…';
+  try{await signIn(email,pass);await afterAuthSuccess();toast('Connecté ✓');}
+  catch(e){document.getElementById('sy-msg').innerHTML='<span style="color:var(--rose)">'+esc(e.message)+'</span>';}
+});
+document.getElementById('ac-signup').addEventListener('click',async()=>{
+  const email=document.getElementById('ac-email').value.trim(),pass=document.getElementById('ac-pass').value;
+  if(!email||!pass){document.getElementById('sy-msg').innerHTML='<span style="color:var(--rose)">Merci de remplir email et mot de passe.</span>';return;}
+  if(pass.length<6){document.getElementById('sy-msg').innerHTML='<span style="color:var(--rose)">Mot de passe : 6 caractères minimum.</span>';return;}
+  document.getElementById('sy-msg').textContent='Création du compte…';
+  try{await signUp(email,pass);await afterAuthSuccess();toast('Compte créé et connecté ✓');}
+  catch(e){document.getElementById('sy-msg').innerHTML='<span style="color:var(--rose)">'+esc(e.message)+'</span>';}
 });
 document.getElementById('sy-refresh').addEventListener('click',()=>pullRemote());
 document.getElementById('sy-disconnect').addEventListener('click',async()=>{
-  if(!confirm('Se déconnecter de la synchronisation ? Vos données restent sur cet ordinateur.'))return;
-  clearInterval(syncPollTimer);await clearSyncCfg();setSyncStatus('off');
+  if(!confirm('Se déconnecter ? Vos données restent sur cet appareil, reconnectez-vous pour les resynchroniser.'))return;
+  clearInterval(syncPollTimer);await clearSession();setSyncStatus('off');
   document.getElementById('sync-setup').classList.remove('hidden');document.getElementById('sync-connected').classList.add('hidden');
-});
-document.getElementById('sy-export-cfg').addEventListener('click',()=>{
-  if(!syncCfg)return;
-  const blob=new Blob([JSON.stringify({app:'patrimoine-sync-config',...syncCfg},null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='patrimoine-config-synchro.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
-  toast('Fichier de configuration téléchargé ✓');
-});
-document.getElementById('sy-import-file').addEventListener('change',e=>{
-  const f=e.target.files&&e.target.files[0];if(!f)return;const rd=new FileReader();
-  rd.onload=async()=>{try{const obj=JSON.parse(rd.result);if(!obj.url||!obj.anonKey||!obj.household)throw new Error('fichier invalide');await connectSync({url:obj.url,anonKey:obj.anonKey,household:obj.household});toast('Configuration importée, connecté ✓');}catch(err){document.getElementById('sy-msg').innerHTML='<span style="color:var(--rose)">Fichier invalide : '+esc(err.message)+'</span>';}};
-  rd.readAsText(f);e.target.value='';
 });
 
 /* ===== Icônes + Init ===== */
 document.querySelectorAll('[data-icon]').forEach(el=>el.insertAdjacentHTML('afterbegin',svg(el.dataset.icon)));
 (async function init(){
   await loadState();
-  await loadSyncCfg();
+  await loadSession();
   const g=document.getElementById('greet-h');if(g)g.innerHTML="Bonjour Alex&nbsp;👋";
   renderOwnerFilter();render();updateSyncUI();
-  if(syncCfg){await pullRemote(true);startSyncPoll();}
+  if(session){await pullRemote(true);startSyncPoll();}
   const empty=state.incomes.length+state.expenses.length+state.accounts.length+state.projects.length===0;
   if(empty)openWelcome();
 })();

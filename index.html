@@ -129,6 +129,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
 .link-out:hover{text-decoration:underline}
 .empty-note{color:var(--muted);font-size:13.5px;text-align:center;padding:24px 10px}
 .overlay{position:fixed;inset:0;background:rgba(50,30,100,.34);backdrop-filter:blur(3px);display:none;place-items:center;z-index:60;padding:20px;overflow-y:auto}
+.overlay.forced{background:linear-gradient(165deg,#5B21B6 0%,#6D28D9 45%,#8B5CF6 100%);backdrop-filter:none}
 .overlay.on{display:grid}
 .modal{background:#fff;border-radius:var(--r);padding:24px;max-width:520px;width:100%;box-shadow:0 40px 90px rgba(50,20,100,.3);animation:pop .22s ease;margin:auto}
 .modal.wide{max-width:660px}
@@ -199,7 +200,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
 @media(max-width:760px){.app{flex-direction:column}.sidebar{width:auto;height:auto;position:sticky;top:0;z-index:40;border-radius:0 0 var(--r) var(--r);padding:12px}.menu-lbl,.banks-lbl{display:none}.nav{flex-direction:row;overflow-x:auto;gap:6px}.nav button{white-space:nowrap;padding:9px 11px;font-size:13px}.side-scroll{display:none}.side-save{margin-top:10px}.side-bottom{border-top:none;padding-top:8px}.topbar{padding:14px}.content{padding:4px 14px 50px}.owner-filter{margin-left:0;order:5;width:100%;justify-content:space-between}.pos-row{grid-template-columns:1fr 1fr}.pos-meta{padding-left:0}.choice-grid{grid-template-columns:1fr}.stmt-cand{grid-template-columns:auto 1fr}}
 </style>
 
-<div class="app">
+<div class="app" id="app-root">
   <aside class="sidebar">
     <div class="logo"><div class="mk"><div class="d"></div></div><b>Patrimoine</b></div>
     <div class="menu-lbl">Menu</div>
@@ -927,6 +928,27 @@ async function pushRemote(){
 }
 function startSyncPoll(){clearInterval(syncPollTimer);if(!session)return;syncPollTimer=setInterval(()=>{if(document.visibilityState==='visible'&&!anyOverlayOpen())pullRemote(true);},20000);}
 /* --- interface --- */
+function showGate(){
+  document.getElementById('app-root').classList.add('hidden');
+  document.getElementById('sync-close').classList.add('hidden');
+  document.getElementById('sy-msg').textContent='';
+  document.getElementById('sync-setup').classList.remove('hidden');
+  document.getElementById('sync-connected').classList.add('hidden');
+  document.getElementById('ac-email').value='';document.getElementById('ac-pass').value='';
+  syncOverlay.classList.add('on','forced');
+}
+function showApp(){
+  syncOverlay.classList.remove('forced');
+  document.getElementById('sync-close').classList.remove('hidden');
+  document.getElementById('app-root').classList.remove('hidden');
+  closeSyncModal();
+}
+function finishBoot(){
+  renderOwnerFilter();render();updateSyncUI();
+  const g=document.getElementById('greet-h');if(g)g.innerHTML="Bonjour Alex&nbsp;👋";
+  const empty=state.incomes.length+state.expenses.length+state.accounts.length+state.projects.length===0;
+  if(empty)openWelcome();
+}
 const syncOverlay=document.getElementById('sync-overlay');
 function openSyncModal(){
   document.getElementById('sy-msg').textContent='';
@@ -940,13 +962,18 @@ function closeSyncModal(){syncOverlay.classList.remove('on');}
 document.getElementById('sync-pill').addEventListener('click',openSyncModal);
 document.getElementById('sync-close').addEventListener('click',closeSyncModal);
 document.getElementById('sync-close2').addEventListener('click',closeSyncModal);
-syncOverlay.addEventListener('click',e=>{if(e.target===syncOverlay)closeSyncModal();});
-async function afterAuthSuccess(){setSyncStatus('pending');await pullRemote();startSyncPoll();document.getElementById('sync-setup').classList.add('hidden');document.getElementById('sync-connected').classList.remove('hidden');}
+syncOverlay.addEventListener('click',e=>{if(e.target===syncOverlay&&!syncOverlay.classList.contains('forced'))closeSyncModal();});
+async function afterAuthSuccess(){
+  setSyncStatus('pending');await pullRemote();startSyncPoll();
+  document.getElementById('sync-setup').classList.add('hidden');document.getElementById('sync-connected').classList.remove('hidden');
+  if(!document.getElementById('app-root').classList.contains('hidden'))return; // déjà visible (reconnexion depuis le menu)
+  showApp();finishBoot();
+}
 document.getElementById('ac-signin').addEventListener('click',async()=>{
   const email=document.getElementById('ac-email').value.trim(),pass=document.getElementById('ac-pass').value;
   if(!email||!pass){document.getElementById('sy-msg').innerHTML='<span style="color:var(--rose)">Merci de remplir email et mot de passe.</span>';return;}
   document.getElementById('sy-msg').textContent='Connexion…';
-  try{await signIn(email,pass);await afterAuthSuccess();toast('Connecté ✓');}
+  try{await signIn(email,pass);syncLastAppliedAt=0;await afterAuthSuccess();toast('Connecté ✓');}
   catch(e){document.getElementById('sy-msg').innerHTML='<span style="color:var(--rose)">'+esc(e.message)+'</span>';}
 });
 document.getElementById('ac-signup').addEventListener('click',async()=>{
@@ -954,14 +981,19 @@ document.getElementById('ac-signup').addEventListener('click',async()=>{
   if(!email||!pass){document.getElementById('sy-msg').innerHTML='<span style="color:var(--rose)">Merci de remplir email et mot de passe.</span>';return;}
   if(pass.length<6){document.getElementById('sy-msg').innerHTML='<span style="color:var(--rose)">Mot de passe : 6 caractères minimum.</span>';return;}
   document.getElementById('sy-msg').textContent='Création du compte…';
-  try{await signUp(email,pass);await afterAuthSuccess();toast('Compte créé et connecté ✓');}
-  catch(e){document.getElementById('sy-msg').innerHTML='<span style="color:var(--rose)">'+esc(e.message)+'</span>';}
+  try{
+    state=blankState();normalizeState();await persistLocal(); // un nouveau compte démarre toujours à zéro
+    await signUp(email,pass);syncLastAppliedAt=0;await afterAuthSuccess();toast('Compte créé et connecté ✓');
+  }catch(e){document.getElementById('sy-msg').innerHTML='<span style="color:var(--rose)">'+esc(e.message)+'</span>';}
 });
 document.getElementById('sy-refresh').addEventListener('click',()=>pullRemote());
 document.getElementById('sy-disconnect').addEventListener('click',async()=>{
-  if(!confirm('Se déconnecter ? Vos données restent sur cet appareil, reconnectez-vous pour les resynchroniser.'))return;
+  if(!confirm('Se déconnecter ? Vos données restent en ligne sur votre compte ; reconnectez-vous pour les retrouver.'))return;
+  clearTimeout(saveTimer);await persist(); // pousse les changements en attente avant de couper la session
   clearInterval(syncPollTimer);await clearSession();setSyncStatus('off');
+  state=blankState();normalizeState();await persistLocal();
   document.getElementById('sync-setup').classList.remove('hidden');document.getElementById('sync-connected').classList.add('hidden');
+  showGate();
 });
 
 /* ===== Icônes + Init ===== */
@@ -969,10 +1001,13 @@ document.querySelectorAll('[data-icon]').forEach(el=>el.insertAdjacentHTML('afte
 (async function init(){
   await loadState();
   await loadSession();
-  const g=document.getElementById('greet-h');if(g)g.innerHTML="Bonjour Alex&nbsp;👋";
-  renderOwnerFilter();render();updateSyncUI();
-  if(session){await pullRemote(true);startSyncPoll();}
-  const empty=state.incomes.length+state.expenses.length+state.accounts.length+state.projects.length===0;
-  if(empty)openWelcome();
+  if(session)await ensureFreshToken();
+  if(session){
+    showApp();
+    await pullRemote(true);startSyncPoll();
+    finishBoot();
+  }else{
+    showGate();
+  }
 })();
 </script>

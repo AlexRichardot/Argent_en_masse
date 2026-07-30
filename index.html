@@ -691,20 +691,22 @@ function setTab(t){tab=t;document.querySelectorAll('#nav button').forEach(b=>b.c
 function renderOwnerFilter(){const el=document.getElementById('owner-filter');const opts=[['all','Tous','#4B4767'],['alex','Alex',OWNERS.alex.color],['lea','Léa',OWNERS.lea.color],['commun','Commun',OWNERS.commun.color]];el.innerHTML=opts.map(([k,l,c])=>`<button data-owner="${k}" class="${of()===k?'on':''}" style="${of()===k?'background:'+c:''}">${k!=='all'?`<span class="od" style="background:${of()===k?'#fff':c}"></span>`:''}${l}</button>`).join('');}
 function renderBankLinks(){const used=[...new Set(activeSet(state.accounts).map(a=>a.bank).filter(Boolean))];const box=document.getElementById('bank-links'),lbl=document.getElementById('banks-lbl');if(!used.length){box.innerHTML='';lbl.style.display='none';return;}lbl.style.display='';box.innerHTML=used.map(k=>{const b=BANKS[k];if(!b)return'';const url=b.login||(b.domain?'https://'+b.domain:'#');return `<a class="bank-link" href="${url}" target="_blank" rel="noopener">${bankLogo(k,22)}<span>${esc(b.name)}</span><span class="ext">${svg('ext',14)}</span></a>`;}).join('');}
 /* ===== Cours en direct (bêta) ===== */
+const EXCHANGE_MAP={'NASDAQ':'NASDAQ','Euronext Paris':'Euronext','Euronext Amsterdam':'Euronext','Xetra':'XETRA'};
 async function fetchQuote(accId,pid){
   const acc=state.accounts.find(a=>a.id===accId);if(!acc)return;const p=(acc.positions||[]).find(x=>x.id===pid);if(!p)return;
-  const label=[p.name,p.ticker,p.x?('('+p.x+')'):''].filter(Boolean).join(' ').trim();
-  if(!label){p.err='Indiquez un titre';renderPosbox(accId);return;}
+  if(!p.ticker){p.err='Sélectionnez un titre dans la liste';renderPosbox(accId);return;}
   p.loading=true;p.err='';renderPosbox(accId);
   try{
-    const prompt=`Donne le dernier cours de bourse connu pour : ${label}. Utilise la recherche web. Réponds UNIQUEMENT par un objet JSON sur une seule ligne, sans texte ni markdown : {"price_native":NOMBRE,"currency":"CODE","price_eur":NOMBRE,"asof":"AAAA-MM-JJ"}. price_eur = cours converti en euros.`;
-    let r;try{r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1024,messages:[{role:"user",content:prompt}],tools:[{type:"web_search_20250305",name:"web_search"}]})});}catch(net){throw new Error('réseau indisponible');}
-    if(!r.ok){let d='HTTP '+r.status;try{const ej=await r.json();if(ej&&ej.error&&ej.error.message)d=ej.error.message;}catch(_){}throw new Error(d);}
-    const data=await r.json();let txt='';if(typeof data.content==='string')txt=data.content;else if(Array.isArray(data.content))txt=data.content.map(b=>typeof b==='string'?b:(b&&typeof b.text==='string'?b.text:'')).join('\n');
-    txt=txt.replace(/```json/gi,'').replace(/```/g,'');let q=null;try{q=JSON.parse(txt.trim());}catch(_){const mm=txt.match(/\{[^{}]*\}/g)||[];for(const c of mm){try{const o=JSON.parse(c);if(o&&(o.price_eur!=null||o.price_native!=null)){q=o;break;}}catch(__){}}}
-    if(!q)throw new Error('réponse illisible');const price=Number(q.price_eur!=null?q.price_eur:q.price_native);if(!isFinite(price)||price<=0)throw new Error('cours introuvable');
-    p.price=Math.round(price*100)/100;p.cur=q.currency||'EUR';p.native=Number(q.price_native)||price;p.asof=q.asof||new Date().toISOString().slice(0,10);p.err='';
-  }catch(e){p.err='Cours auto indisponible ('+(e.message||'erreur')+')';}
+    await ensureFreshToken();
+    let url=SUPABASE_URL+'/functions/v1/quote?symbol='+encodeURIComponent(p.ticker);
+    const exch=EXCHANGE_MAP[p.x];if(exch)url+='&exchange='+encodeURIComponent(exch);
+    const r=await fetch(url,{headers:sbHeaders()});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok||data.error)throw new Error(data.error||('HTTP '+r.status));
+    const price=Number(data.price_eur);
+    if(!isFinite(price)||price<=0)throw new Error('cours introuvable');
+    p.price=price;p.cur=data.currency||'EUR';p.native=Number(data.price_native)||price;p.asof=data.asof||new Date().toISOString().slice(0,10);p.err='';
+  }catch(e){p.err='Cours indisponible ('+(e.message||'erreur')+')';}
   p.loading=false;save();renderPosbox(accId);updateWealthTotals();
 }
 function renderPosbox(accId){const box=document.getElementById('posbox-'+accId);const a=state.accounts.find(x=>x.id===accId);if(box&&a)box.innerHTML=positionsInner(a);}

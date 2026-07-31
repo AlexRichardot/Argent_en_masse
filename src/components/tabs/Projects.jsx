@@ -3,6 +3,7 @@ import { useData } from '../../context/DataContext';
 import { computeMetrics, sortedProjects, uid, newOwnerFor, profileInfo } from '../../lib/metrics';
 import { eur0, fmtDate, whenLabel, n } from '../../lib/format';
 import Icon from '../Icon';
+import SwipeRow from '../SwipeRow';
 
 function ProjectForm({ ownerFilter, profiles, editing, onSave, onCancel }) {
   const rec = editing || {};
@@ -126,27 +127,45 @@ export default function Projects({ ownerFilter }) {
                 }
                 const w = whenLabel(nd.date);
                 const o = profileInfo(state.profiles, p.owner);
+                const kindPill = (
+                  <span className="pill sm" style={{ background: p.kind === 'objectif' ? '#EDE9FE' : '#E4F0FE', color: p.kind === 'objectif' ? '#7C3AED' : '#3B82F6' }}>
+                    {p.kind === 'objectif' ? 'Objectif' : 'Échéance'}{p.recur && p.recur !== 'once' ? ' · récurrent' : ''}
+                  </span>
+                );
                 return (
                   <tr key={p.id}>
-                    <td data-label="Projet" style={{ fontWeight: 600 }}>{p.label || 'Projet'}</td>
-                    <td data-label="Type">
-                      <span className="pill" style={{ background: p.kind === 'objectif' ? '#EDE9FE' : '#E4F0FE', color: p.kind === 'objectif' ? '#7C3AED' : '#3B82F6' }}>
-                        {p.kind === 'objectif' ? 'Objectif' : 'Échéance'}{p.recur && p.recur !== 'once' ? ' · récurrent' : ''}
-                      </span>
-                    </td>
-                    <td data-label="Détenteur">
+                    <td className="d-cell" style={{ fontWeight: 600 }}>{p.label || 'Projet'}</td>
+                    <td className="d-cell">{kindPill}</td>
+                    <td className="d-cell">
                       <span className="owner-chip" style={{ background: o.color + '18', color: o.color }}>
                         <span className="dot" style={{ background: o.color }} />{o.name}
                       </span>
                     </td>
-                    <td data-label="Date estimée">{(nd.estimated ? '≈ ' : '') + fmtDate(nd.date)}</td>
-                    <td data-label="Montant" className="r amt">{eur0.format(n(p.amount))}</td>
-                    <td data-label="Échéance" style={{ color: w.color, fontWeight: 600, fontSize: 12.5 }}>{w.txt}</td>
-                    <td>
+                    <td className="d-cell">{(nd.estimated ? '≈ ' : '') + fmtDate(nd.date)}</td>
+                    <td className="d-cell r amt">{eur0.format(n(p.amount))}</td>
+                    <td className="d-cell" style={{ color: w.color, fontWeight: 600, fontSize: 12.5 }}>{w.txt}</td>
+                    <td className="d-cell">
                       <div className="rowact">
                         <button className="iconbtn" title="Modifier" onClick={() => setFormMode(p.id)}><Icon name="edit" size={14} /></button>
                         <button className="iconbtn danger" title="Supprimer" onClick={() => delProject(p.id)}><Icon name="trash" size={14} /></button>
                       </div>
+                    </td>
+                    <td className="m-cell" colSpan={7}>
+                      <SwipeRow onEdit={() => setFormMode(p.id)} onDelete={() => delProject(p.id)}>
+                        <div className="rline">
+                          <span className="rline-text">{p.label || 'Projet'}</span>
+                          <span className="rline-amt">{eur0.format(n(p.amount))}</span>
+                        </div>
+                        <div className="rline sub">
+                          <span className="rline-meta">
+                            {kindPill}
+                            <span className="owner-chip sm" style={{ background: o.color + '18', color: o.color }}>
+                              <span className="dot" style={{ background: o.color }} />{o.name}
+                            </span>
+                          </span>
+                          <span className="rline-when" style={{ color: w.color }}>{w.txt}</span>
+                        </div>
+                      </SwipeRow>
                     </td>
                   </tr>
                 );

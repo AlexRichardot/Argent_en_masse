@@ -6,6 +6,7 @@ import { EXPENSE_CATS, catInfo, TYPES, BANKS } from '../../lib/catalogs';
 import BankLogo from '../BankLogo';
 import Icon from '../Icon';
 import Bars from '../Bars';
+import SwipeRow from '../SwipeRow';
 
 function flowAnalysis(m) {
   if (m.income <= 0) return "Ajoutez vos revenus et dépenses pour obtenir une analyse.";
@@ -89,13 +90,21 @@ function IncomeRow({ item, profiles, onSave, onDelete }) {
   }
   return (
     <tr>
-      <td data-label="Source" style={{ fontWeight: 600 }}>{item.label}</td>
-      <td data-label="Montant / mois" className="r amt" style={{ color: 'var(--emerald)' }}>{eur0.format(n(item.amount))}</td>
-      <td>
+      <td className="d-cell" style={{ fontWeight: 600 }}>{item.label}</td>
+      <td className="d-cell r amt" style={{ color: 'var(--emerald)' }}>{eur0.format(n(item.amount))}</td>
+      <td className="d-cell">
         <div className="rowact">
           <button className="iconbtn" title="Modifier" onClick={startEdit}><Icon name="edit" size={14} /></button>
           <button className="iconbtn danger" title="Supprimer" onClick={() => onDelete(item.id)}><Icon name="trash" size={14} /></button>
         </div>
+      </td>
+      <td className="m-cell" colSpan={3}>
+        <SwipeRow onEdit={startEdit} onDelete={() => onDelete(item.id)}>
+          <div className="rline">
+            <span className="rline-text">{item.label}</span>
+            <span className="rline-amt" style={{ color: 'var(--emerald)' }}>{eur0.format(n(item.amount))}</span>
+          </div>
+        </SwipeRow>
       </td>
     </tr>
   );
@@ -168,14 +177,25 @@ function ExpenseRow({ item, profiles, onSave, onDelete }) {
   const ci = catInfo(item.category);
   return (
     <tr>
-      <td data-label="Dépense" style={{ fontWeight: 600 }}>{item.name || item.category}</td>
-      <td data-label="Catégorie"><span className="pill" style={{ background: ci.color + '1a', color: ci.color }}><span className="dot" style={{ background: ci.color }} />{ci.key}</span></td>
-      <td data-label="Montant / mois" className="r amt" style={{ color: 'var(--rose)' }}>{eur0.format(n(item.amount))}</td>
-      <td>
+      <td className="d-cell" style={{ fontWeight: 600 }}>{item.name || item.category}</td>
+      <td className="d-cell"><span className="pill" style={{ background: ci.color + '1a', color: ci.color }}><span className="dot" style={{ background: ci.color }} />{ci.key}</span></td>
+      <td className="d-cell r amt" style={{ color: 'var(--rose)' }}>{eur0.format(n(item.amount))}</td>
+      <td className="d-cell">
         <div className="rowact">
           <button className="iconbtn" title="Modifier" onClick={startEdit}><Icon name="edit" size={14} /></button>
           <button className="iconbtn danger" title="Supprimer" onClick={() => onDelete(item.id)}><Icon name="trash" size={14} /></button>
         </div>
+      </td>
+      <td className="m-cell" colSpan={4}>
+        <SwipeRow onEdit={startEdit} onDelete={() => onDelete(item.id)}>
+          <div className="rline">
+            <span className="rline-name">
+              <span className="rline-text">{item.name || item.category}</span>
+              <span className="pill sm" style={{ background: ci.color + '1a', color: ci.color }}>{ci.key}</span>
+            </span>
+            <span className="rline-amt" style={{ color: 'var(--rose)' }}>{eur0.format(n(item.amount))}</span>
+          </div>
+        </SwipeRow>
       </td>
     </tr>
   );
@@ -249,18 +269,29 @@ function SavingRow({ item, accounts, profiles, onSave, onDelete }) {
   }
   return (
     <tr>
-      <td data-label="Destination" style={{ fontWeight: 600 }}>
+      <td className="d-cell" style={{ fontWeight: 600 }}>
         <span className="cellbank">
           {acc?.bank && <BankLogo bankKey={acc.bank} size={20} />}
           {acc ? (acc.label || TYPES[acc.type]?.label) : 'Compte supprimé'}
         </span>
       </td>
-      <td data-label="Montant / mois" className="r amt" style={{ color: 'var(--violet)' }}>{eur0.format(n(item.amount))}</td>
-      <td>
+      <td className="d-cell r amt" style={{ color: 'var(--violet)' }}>{eur0.format(n(item.amount))}</td>
+      <td className="d-cell">
         <div className="rowact">
           <button className="iconbtn" title="Modifier" onClick={startEdit}><Icon name="edit" size={14} /></button>
           <button className="iconbtn danger" title="Supprimer" onClick={() => onDelete(item.id)}><Icon name="trash" size={14} /></button>
         </div>
+      </td>
+      <td className="m-cell" colSpan={3}>
+        <SwipeRow onEdit={startEdit} onDelete={() => onDelete(item.id)}>
+          <div className="rline">
+            <span className="rline-name">
+              {acc?.bank && <BankLogo bankKey={acc.bank} size={18} />}
+              <span className="rline-text">{acc ? (acc.label || TYPES[acc.type]?.label) : 'Compte supprimé'}</span>
+            </span>
+            <span className="rline-amt" style={{ color: 'var(--violet)' }}>{eur0.format(n(item.amount))}</span>
+          </div>
+        </SwipeRow>
       </td>
     </tr>
   );

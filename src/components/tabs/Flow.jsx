@@ -348,7 +348,7 @@ export default function Flow({ ownerFilter }) {
         <div className="toolbar">
           <h3 style={{ margin: 0 }}>Revenus</h3>
           <div className="sp" />
-          {!incFormOpen && <button className="btn primary" onClick={() => setIncFormOpen(true)}>+ Ajouter un revenu</button>}
+          {!incFormOpen && <button className="iconbtn add" title="Ajouter un revenu" onClick={() => setIncFormOpen(true)}><Icon name="plus" size={16} /></button>}
         </div>
         {incFormOpen && <AddIncomeForm ownerFilter={ownerFilter} profiles={state.profiles} onAdd={addIncome} />}
         {incomes.length ? (
@@ -371,7 +371,7 @@ export default function Flow({ ownerFilter }) {
         <div className="toolbar">
           <h3 style={{ margin: 0 }}>Dépenses</h3>
           <div className="sp" />
-          {!expFormOpen && <button className="btn primary" onClick={() => setExpFormOpen(true)}>+ Ajouter une dépense</button>}
+          {!expFormOpen && <button className="iconbtn add" title="Ajouter une dépense" onClick={() => setExpFormOpen(true)}><Icon name="plus" size={16} /></button>}
         </div>
         {expFormOpen && <AddExpenseForm ownerFilter={ownerFilter} profiles={state.profiles} onAdd={addExpense} />}
         {expenses.length ? (
@@ -394,7 +394,7 @@ export default function Flow({ ownerFilter }) {
         <div className="toolbar">
           <h3 style={{ margin: 0 }}>Épargne (affectation)</h3>
           <div className="sp" />
-          {state.accounts.length > 0 && !savFormOpen && <button className="btn primary" onClick={() => setSavFormOpen(true)}>+ Affecter à l'épargne</button>}
+          {state.accounts.length > 0 && !savFormOpen && <button className="iconbtn add" title="Affecter à l'épargne" onClick={() => setSavFormOpen(true)}><Icon name="plus" size={16} /></button>}
         </div>
         {state.accounts.length ? (
           <>

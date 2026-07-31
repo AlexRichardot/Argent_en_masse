@@ -9,6 +9,9 @@ import Confirm from '../Confirm';
 import Icon from '../Icon';
 import SwipeRow from '../SwipeRow';
 
+const SAFE_TYPE_KEYS = Object.keys(TYPES).filter((k) => !isPosType(k));
+const MARKET_TYPE_KEYS = Object.keys(TYPES).filter((k) => isPosType(k));
+
 function matchSecurities(q) {
   const s = q.trim().toLowerCase();
   if (!s) return SECURITIES.slice(0, 8);
@@ -161,10 +164,11 @@ function AccountPositions({ acc, updateAccount }) {
   );
 }
 
-function AccountForm({ ownerFilter, profiles, editing, onSave, onCancel }) {
+function AccountForm({ ownerFilter, profiles, editing, typeKeys, onSave, onCancel }) {
   const rec = editing || {};
+  const availableTypes = typeKeys || Object.keys(TYPES);
   const [label, setLabel] = useState(rec.label || '');
-  const [type, setType] = useState(rec.type || 'livret_a');
+  const [type, setType] = useState(rec.type || availableTypes[0]);
   const [bank, setBank] = useState(rec.bank || '');
   const [owner, setOwner] = useState(rec.owner || newOwnerFor(ownerFilter, profiles));
   const [balance, setBalance] = useState(rec.balance ?? '');
@@ -203,7 +207,7 @@ function AccountForm({ ownerFilter, profiles, editing, onSave, onCancel }) {
         <div className="field">
           <label>Type</label>
           <select className="inp" value={type} onChange={(e) => changeType(e.target.value)}>
-            {Object.entries(TYPES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+            {availableTypes.map((k) => <option key={k} value={k}>{TYPES[k].label}</option>)}
           </select>
         </div>
         <div className="field">
@@ -349,11 +353,11 @@ export default function Wealth({ ownerFilter }) {
     });
   }
 
-  function renderSection(list) {
+  function renderSection(list, typeKeys) {
     return list.map((a) => {
       if (formMode === a.id) {
         return (
-          <AccountForm key={a.id} ownerFilter={ownerFilter} profiles={state.profiles} editing={a}
+          <AccountForm key={a.id} ownerFilter={ownerFilter} profiles={state.profiles} editing={a} typeKeys={typeKeys}
             onSave={saveAccount} onCancel={() => setFormMode(null)} />
         );
       }
@@ -375,44 +379,55 @@ export default function Wealth({ ownerFilter }) {
     <>
       <div className="card">
         <div className="toolbar">
-          <h3 style={{ margin: 0 }}>Comptes & enveloppes</h3>
+          <h3 style={{ margin: 0 }}>Comptes</h3>
           <div className="sp" />
-          {!formMode && <button className="btn primary" onClick={() => setFormMode('new')}>+ Ajouter une épargne</button>}
+          {!formMode && <button className="iconbtn add" title="Ajouter un compte" onClick={() => setFormMode('new-safe')}><Icon name="plus" size={16} /></button>}
         </div>
-        {formMode === 'new' && (
-          <AccountForm ownerFilter={ownerFilter} profiles={state.profiles} editing={null}
+        {formMode === 'new-safe' && (
+          <AccountForm ownerFilter={ownerFilter} profiles={state.profiles} editing={null} typeKeys={SAFE_TYPE_KEYS}
             onSave={saveAccount} onCancel={() => setFormMode(null)} />
         )}
-        {accounts.length ? (
+        {safeAccounts.length ? (
           <>
-            {safeAccounts.length > 0 && (
-              <div style={{ marginBottom: marketAccounts.length ? 22 : 0 }}>
-                <h4 style={{ margin: '4px 0 8px', fontFamily: 'Poppins', fontSize: 14 }}>Comptes, livrets & assurances</h4>
-                <div className="acc-lines-wealth">{renderSection(safeAccounts)}</div>
-                <div className="section-total">
-                  <span className="lbl">Sous-total{safeYield > 0 ? <> · rendement estimé <b style={{ color: 'var(--emerald)' }}>{eur0.format(safeYield)}</b> / an</> : null}</span>
-                  <span className="amt">{eur0.format(safeTotal)}</span>
-                </div>
-              </div>
-            )}
-            {marketAccounts.length > 0 && (
-              <div>
-                <h4 style={{ margin: '4px 0 8px', fontFamily: 'Poppins', fontSize: 14 }}>Investissements boursiers</h4>
-                <p className="hint" style={{ margin: '0 0 8px' }}>Pas de rendement estimé : la valeur dépend des cours du jour.</p>
-                <div className="acc-lines-wealth">{renderSection(marketAccounts)}</div>
-                <div className="section-total">
-                  <span className="lbl">Sous-total</span>
-                  <span className="amt">{eur0.format(marketTotal)}</span>
-                </div>
-              </div>
-            )}
-            <div className="section-total" style={{ borderTop: '2px solid var(--line)', marginTop: 16, paddingTop: 14 }}>
-              <span className="lbl">Patrimoine total</span>
-              <span className="amt" style={{ color: 'var(--violet)' }}>{eur0.format(m.patrimoine)}</span>
+            <div className="acc-lines-wealth">{renderSection(safeAccounts, SAFE_TYPE_KEYS)}</div>
+            <div className="section-total">
+              <span className="lbl">Sous-total{safeYield > 0 ? <> · rendement estimé <b style={{ color: 'var(--emerald)' }}>{eur0.format(safeYield)}</b> / an</> : null}</span>
+              <span className="amt">{eur0.format(safeTotal)}</span>
             </div>
           </>
-        ) : <div className="empty-note">Aucun compte. Ajoutez un compte (livret, PEA, assurance-vie, immobilier…).</div>}
+        ) : <div className="empty-note">Aucun compte. Ajoutez un livret, une assurance-vie, un bien immobilier…</div>}
       </div>
+
+      <div className="card" style={{ marginTop: 18 }}>
+        <div className="toolbar">
+          <h3 style={{ margin: 0 }}>Investissements boursiers</h3>
+          <div className="sp" />
+          {!formMode && <button className="iconbtn add" title="Ajouter un investissement" onClick={() => setFormMode('new-market')}><Icon name="plus" size={16} /></button>}
+        </div>
+        {formMode === 'new-market' && (
+          <AccountForm ownerFilter={ownerFilter} profiles={state.profiles} editing={null} typeKeys={MARKET_TYPE_KEYS}
+            onSave={saveAccount} onCancel={() => setFormMode(null)} />
+        )}
+        {marketAccounts.length ? (
+          <>
+            <p className="hint" style={{ margin: '0 0 8px' }}>Pas de rendement estimé : la valeur dépend des cours du jour.</p>
+            <div className="acc-lines-wealth">{renderSection(marketAccounts, MARKET_TYPE_KEYS)}</div>
+            <div className="section-total">
+              <span className="lbl">Sous-total</span>
+              <span className="amt">{eur0.format(marketTotal)}</span>
+            </div>
+          </>
+        ) : <div className="empty-note">Aucun compte-titres ou PEA. Ajoutez-en un pour suivre vos actions et ETF.</div>}
+      </div>
+
+      {accounts.length > 0 && (
+        <div className="card" style={{ marginTop: 18 }}>
+          <div className="section-total" style={{ margin: 0, padding: 0, border: 'none' }}>
+            <span className="lbl">Patrimoine total</span>
+            <span className="amt" style={{ color: 'var(--violet)' }}>{eur0.format(m.patrimoine)}</span>
+          </div>
+        </div>
+      )}
       {confirmDelId && (
         <Confirm
           title="Supprimer ce compte ?"

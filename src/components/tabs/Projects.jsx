@@ -99,11 +99,8 @@ export default function Projects({ ownerFilter }) {
         <div className="toolbar">
           <h3 style={{ margin: 0 }}>Projets & échéances à venir</h3>
           <div className="sp" />
-          {!formMode && <button className="btn primary" onClick={() => setFormMode('new')}>+ Ajouter un projet</button>}
+          {!formMode && <button className="iconbtn add" title="Ajouter un projet" onClick={() => setFormMode('new')}><Icon name="plus" size={16} /></button>}
         </div>
-        <p className="hint" style={{ margin: '4px 0 14px' }}>
-          Un <b>objectif</b> voit sa date estimée selon votre capacité d'épargne ; une <b>échéance</b> a une date fixe (ponctuelle ou récurrente).
-        </p>
         {formMode === 'new' && (
           <ProjectForm ownerFilter={ownerFilter} profiles={state.profiles} editing={null} onSave={saveProject} onCancel={() => setFormMode(null)} />
         )}

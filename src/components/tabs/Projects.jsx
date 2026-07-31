@@ -28,7 +28,7 @@ function ProjectForm({ ownerFilter, profiles, editing, onSave, onCancel }) {
         <label>Nom du projet / de l'échéance</label>
         <input className="inp" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Taxe foncière, achat voiture, bébé…" />
       </div>
-      <div className="two" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+      <div className="two">
         <div className="field">
           <label>Type</label>
           <select className="inp" value={kind} onChange={(e) => setKind(e.target.value)}>
@@ -42,7 +42,7 @@ function ProjectForm({ ownerFilter, profiles, editing, onSave, onCancel }) {
         </div>
       </div>
       {kind === 'echeance' ? (
-        <div className="two" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+        <div className="two">
           <div className="field">
             <label>Date</label>
             <input className="inp" type="date" value={date} onChange={(e) => setDate(e.target.value)} />

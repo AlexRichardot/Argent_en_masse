@@ -55,7 +55,7 @@ function SecurityField({ pos, onChange }) {
       {open && matches.length > 0 && (
         <div className="ac-pop on" style={{ position: 'absolute', top: '100%', left: 0, width: 280 }}>
           {matches.map((sec) => (
-            <div key={sec.t} className="ac-item" onMouseDown={(e) => { e.preventDefault(); clearTimeout(blurTimer.current); pick(sec); }}>
+            <div key={sec.t} className="ac-item" onPointerDown={(e) => { e.preventDefault(); clearTimeout(blurTimer.current); pick(sec); }}>
               <span className="tk">{sec.t}</span>
               <span><span className="nm">{sec.n}</span> <span className="mx">{sec.x}</span></span>
               {sec.pea && <span className="pe">PEA</span>}
@@ -100,12 +100,14 @@ function PositionRow({ pos, onChange, onRemove }) {
           <input className="inp num" inputMode="decimal" value={pos.price ?? ''} placeholder="0" disabled={pos.loading}
             onChange={(e) => onChange({ ...pos, price: e.target.value })} />
         </div>
-        {pos.loading ? (
-          <button className="refresh" disabled type="button"><span className="spin" /></button>
-        ) : (
-          <button className="refresh" type="button" title="Récupérer le cours" onClick={() => fetchQuote(pos, onChange)}>↻</button>
-        )}
-        <button className="remove" type="button" onClick={onRemove}>×</button>
+        <div className="pos-actions">
+          {pos.loading ? (
+            <button className="refresh" disabled type="button"><span className="spin" /></button>
+          ) : (
+            <button className="refresh" type="button" title="Récupérer le cours" onClick={() => fetchQuote(pos, onChange)}>↻</button>
+          )}
+          <button className="remove" type="button" onClick={onRemove}>×</button>
+        </div>
       </div>
       {(metaText || pos.err || searchUrl) && (
         <div className="pos-meta">
@@ -196,7 +198,7 @@ function AccountForm({ ownerFilter, profiles, editing, onSave, onCancel }) {
         <label>Intitulé</label>
         <input className="inp" value={label} onChange={(e) => setLabel(e.target.value)} placeholder={TYPES[type].label} />
       </div>
-      <div className="two" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+      <div className="two">
         <div className="field">
           <label>Type</label>
           <select className="inp" value={type} onChange={(e) => changeType(e.target.value)}>
@@ -220,7 +222,7 @@ function AccountForm({ ownerFilter, profiles, editing, onSave, onCancel }) {
 
       {type === 'immobilier' ? (
         <>
-          <div className="two" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+          <div className="two">
             <div className="field">
               <label>Valeur du bien</label>
               <div className="suffix"><input className="inp num" inputMode="decimal" value={balance} onChange={(e) => setBalance(e.target.value)} placeholder="0" /><span className="u">€</span></div>
@@ -230,7 +232,7 @@ function AccountForm({ ownerFilter, profiles, editing, onSave, onCancel }) {
               <div className="suffix"><input className="inp num" inputMode="decimal" value={mortgage} onChange={(e) => setMortgage(e.target.value)} placeholder="0" /><span className="u">€</span></div>
             </div>
           </div>
-          <div className="two" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+          <div className="two">
             <div className="field">
               <label>Part de détention</label>
               <div className="suffix"><input className="inp num" inputMode="decimal" value={shareOwn} onChange={(e) => setShareOwn(e.target.value)} placeholder="100" /><span className="u">%</span></div>
@@ -245,7 +247,7 @@ function AccountForm({ ownerFilter, profiles, editing, onSave, onCancel }) {
       ) : isPosType(type) ? (
         <p className="hint" style={{ margin: '0 0 12px' }}>Enregistrez, puis dépliez la ligne du compte (flèche) pour ajouter vos actions/ETF.</p>
       ) : (
-        <div className="two" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+        <div className="two">
           <div className="field">
             <label>Montant</label>
             <div className="suffix"><input className="inp num" inputMode="decimal" value={balance} onChange={(e) => setBalance(e.target.value)} placeholder="0" /><span className="u">€</span></div>

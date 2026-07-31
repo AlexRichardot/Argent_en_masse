@@ -43,12 +43,12 @@ function AddIncomeForm({ ownerFilter, profiles, onAdd }) {
 
   return (
     <div className="card" style={{ marginBottom: 16, background: '#FBFAFF' }}>
-      <div className="toolbar" style={{ flexWrap: 'wrap', gap: 10 }}>
-        <input className="inp" style={{ flex: '1 1 160px' }} placeholder="Source (salaire…)" value={label} onChange={(e) => setLabel(e.target.value)} />
-        <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
+      <div className="form-row">
+        <input className="inp" placeholder="Source (salaire…)" value={label} onChange={(e) => setLabel(e.target.value)} />
+        <select className="inp" value={owner} onChange={(e) => setOwner(e.target.value)}>
           {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
-        <input className="inp num" style={{ flex: '1 1 140px' }} placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <input className="inp num" placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
         <button className="btn primary" onClick={submit}>Ajouter</button>
       </div>
     </div>
@@ -74,12 +74,12 @@ function IncomeRow({ item, profiles, onSave, onDelete }) {
     return (
       <tr>
         <td colSpan={3}>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', padding: '6px 0' }}>
-            <input className="inp" style={{ flex: '1 1 160px' }} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Source" />
-            <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
+          <div className="form-row">
+            <input className="inp" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Source" />
+            <select className="inp" value={owner} onChange={(e) => setOwner(e.target.value)}>
               {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
-            <input className="inp num" style={{ flex: '0 1 140px' }} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Montant / mois" />
+            <input className="inp num" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Montant / mois" />
             <button className="btn primary" onClick={save}>Enregistrer</button>
             <button className="btn ghost" onClick={() => setEditing(false)}>Annuler</button>
           </div>
@@ -114,15 +114,15 @@ function AddExpenseForm({ ownerFilter, profiles, onAdd }) {
 
   return (
     <div className="card" style={{ marginBottom: 16, background: '#FBFAFF' }}>
-      <div className="toolbar" style={{ flexWrap: 'wrap', gap: 10 }}>
-        <input className="inp" style={{ flex: '1 1 160px' }} placeholder="Nom (loyer, Netflix…)" value={name} onChange={(e) => setName(e.target.value)} />
-        <select className="inp" style={{ flex: '0 0 160px' }} value={category} onChange={(e) => setCategory(e.target.value)}>
+      <div className="form-row">
+        <input className="inp" placeholder="Nom (loyer, Netflix…)" value={name} onChange={(e) => setName(e.target.value)} />
+        <select className="inp" value={category} onChange={(e) => setCategory(e.target.value)}>
           {EXPENSE_CATS.map((c) => <option key={c.key} value={c.key}>{c.key}</option>)}
         </select>
-        <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
+        <select className="inp" value={owner} onChange={(e) => setOwner(e.target.value)}>
           {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
-        <input className="inp num" style={{ flex: '1 1 140px' }} placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <input className="inp num" placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
         <button className="btn primary" onClick={submit}>Ajouter</button>
       </div>
     </div>
@@ -149,15 +149,15 @@ function ExpenseRow({ item, profiles, onSave, onDelete }) {
     return (
       <tr>
         <td colSpan={4}>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', padding: '6px 0' }}>
-            <input className="inp" style={{ flex: '1 1 160px' }} value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom" />
-            <select className="inp" style={{ flex: '0 0 150px' }} value={category} onChange={(e) => setCategory(e.target.value)}>
+          <div className="form-row">
+            <input className="inp" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom" />
+            <select className="inp" value={category} onChange={(e) => setCategory(e.target.value)}>
               {EXPENSE_CATS.map((c) => <option key={c.key} value={c.key}>{c.key}</option>)}
             </select>
-            <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
+            <select className="inp" value={owner} onChange={(e) => setOwner(e.target.value)}>
               {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
-            <input className="inp num" style={{ flex: '0 1 140px' }} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Montant / mois" />
+            <input className="inp num" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Montant / mois" />
             <button className="btn primary" onClick={save}>Enregistrer</button>
             <button className="btn ghost" onClick={() => setEditing(false)}>Annuler</button>
           </div>
@@ -193,16 +193,16 @@ function AddSavingForm({ accounts, ownerFilter, profiles, onAdd }) {
 
   return (
     <div className="card" style={{ marginBottom: 16, background: '#FBFAFF' }}>
-      <div className="toolbar" style={{ flexWrap: 'wrap', gap: 10 }}>
-        <select className="inp" style={{ flex: '1 1 200px' }} value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+      <div className="form-row">
+        <select className="inp" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>{a.label || TYPES[a.type]?.label}{a.bank ? ` — ${BANKS[a.bank]?.name || a.bank}` : ''}</option>
           ))}
         </select>
-        <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
+        <select className="inp" value={owner} onChange={(e) => setOwner(e.target.value)}>
           {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
-        <input className="inp num" style={{ flex: '1 1 140px' }} placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <input className="inp num" placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
         <button className="btn primary" onClick={submit}>Ajouter</button>
       </div>
     </div>
@@ -230,16 +230,16 @@ function SavingRow({ item, accounts, profiles, onSave, onDelete }) {
     return (
       <tr>
         <td colSpan={3}>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', padding: '6px 0' }}>
-            <select className="inp" style={{ flex: '1 1 200px' }} value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+          <div className="form-row">
+            <select className="inp" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
               {accounts.map((a) => (
                 <option key={a.id} value={a.id}>{a.label || TYPES[a.type]?.label}{a.bank ? ` — ${BANKS[a.bank]?.name || a.bank}` : ''}</option>
               ))}
             </select>
-            <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
+            <select className="inp" value={owner} onChange={(e) => setOwner(e.target.value)}>
               {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
-            <input className="inp num" style={{ flex: '0 1 140px' }} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Montant / mois" />
+            <input className="inp num" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Montant / mois" />
             <button className="btn primary" onClick={save}>Enregistrer</button>
             <button className="btn ghost" onClick={() => setEditing(false)}>Annuler</button>
           </div>

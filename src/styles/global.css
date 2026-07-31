@@ -7,7 +7,7 @@
   --r:12px;--rs:9px;
   --shadow:0 1px 2px rgba(80,63,140,.04),0 8px 26px rgba(93,63,177,.06);--shadow-card:0 6px 24px rgba(93,63,177,.06);
 }
-*{box-sizing:border-box}html,body{margin:0}
+*{box-sizing:border-box}html,body{margin:0;touch-action:manipulation}
 body{background:var(--bg);background-image:radial-gradient(120% 60% at 100% 0%,#EAE4FB 0%,rgba(244,242,252,0) 55%),radial-gradient(120% 60% at 0% 0%,#EDE9FB 0%,rgba(244,242,252,0) 50%);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:14.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
 .pop{font-family:'Poppins',sans-serif}.mono{font-variant-numeric:tabular-nums}
 button{font-family:inherit;cursor:pointer}input,select{font-family:inherit;font-size:inherit}svg{display:block}a{color:inherit}
@@ -126,6 +126,9 @@ button{font-family:inherit;cursor:pointer}input,select{font-family:inherit;font-
 .acc-rate{font-size:12px;color:var(--muted)}
 .acc-row-meta .rowact{margin-left:auto;display:flex;gap:6px}
 .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:2px}
+.form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:6px 0}
+.form-row .inp{flex:1 1 160px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 .toolbar .sp{margin-left:auto}
 .sortsel{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)}
 .field{display:flex;flex-direction:column;gap:6px}
@@ -176,7 +179,8 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#1F1B34;color:#fff;padding:12px 20px;border-radius:var(--rs);font-size:13.5px;font-weight:500;box-shadow:0 20px 50px rgba(30,10,70,.35);opacity:0;pointer-events:none;transition:.25s;z-index:200}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}.toast.err{background:#B91C1C}
 .posbox{background:#F5F3FC;border-radius:10px;padding:14px 16px;margin:2px 0 6px}
-.pos-row{display:grid;grid-template-columns:112px 1.4fr .7fr 1fr auto auto;gap:8px;align-items:end;padding:8px 0}
+.pos-row{display:grid;grid-template-columns:112px 1.4fr .7fr 1fr auto;gap:8px;align-items:end;padding:8px 0}
+.pos-actions{display:flex;gap:8px}
 .kind-seg{display:flex;background:#EEE9FB;border-radius:8px;padding:2px}
 .kind-seg button{border:none;background:none;padding:6px 7px;border-radius:6px;font-size:11.5px;font-weight:600;color:var(--muted);flex:1}
 .kind-seg button.on{background:#fff;color:var(--violet)}
@@ -248,10 +252,21 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
   .topbar{padding:14px}
   .content{padding:4px 14px 50px}
   .owner-filter{margin-left:0;order:5;width:100%;justify-content:space-between}
-  .pos-row{grid-template-columns:1fr 1fr}
+  .pos-row{grid-template-columns:1fr}
+  .pos-actions{justify-content:flex-end}
+  .kind-seg button{padding:11px 7px}
   .pos-meta{padding-left:0}
   .choice-grid{grid-template-columns:1fr}
   .stmt-cand{grid-template-columns:auto 1fr}
+  .form-row{flex-direction:column;align-items:stretch}
+  .form-row .inp{flex:none;width:100%}
+  .two{grid-template-columns:1fr}
+  .bar-row{grid-template-columns:1fr auto;grid-template-areas:"lab val" "track track";row-gap:6px}
+  .bar-lab{grid-area:lab}
+  .bar-val{grid-area:val}
+  .bar-track{grid-area:track}
+  .modal{max-height:calc(100vh - 40px);overflow-y:auto}
+  .mobile-tabbar{padding-bottom:calc(4px + env(safe-area-inset-bottom))}
 
   /* Tableaux -> cartes empilées (colonnes illisibles sur petit écran) */
   .ledger thead{display:none}
@@ -262,4 +277,11 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
   .ledger td[data-label]{display:flex;justify-content:space-between;align-items:center;gap:12px}
   .ledger td[data-label]::before{content:attr(data-label);font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;flex:none}
   .ledger tr.posdetail td{padding:0}
+
+  /* Cibles tactiles agrandies (min. 44px recommandé) */
+  .iconbtn{width:44px;height:44px}
+  .caret{width:44px;height:44px}
+  .refresh,.remove{width:44px;height:44px}
+  .chk{width:28px;height:28px}
+  .burger-btn{width:44px;height:44px}
 }

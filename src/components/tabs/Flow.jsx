@@ -4,6 +4,32 @@ import { computeMetrics, activeSet, uid, newOwnerFor } from '../../lib/metrics';
 import { eur0, pct, n } from '../../lib/format';
 import { EXPENSE_CATS, catInfo, OWNERS, TYPES, BANKS } from '../../lib/catalogs';
 import BankLogo from '../BankLogo';
+import Icon from '../Icon';
+import Bars from '../Bars';
+
+function flowAnalysis(m) {
+  if (m.income <= 0) return "Ajoutez vos revenus et dépenses pour obtenir une analyse.";
+  const parts = [];
+  if (m.capacity < 0) {
+    parts.push(`Vos dépenses dépassent vos revenus de ${eur0.format(-m.capacity)} par mois : il est urgent de réduire certains postes ou d'augmenter vos revenus.`);
+  } else if (m.rate < 0.1) {
+    parts.push(`Votre taux d'épargne est d'environ ${pct(m.rate)}, plutôt faible. Viser 15 à 20 % accélère la constitution de votre patrimoine.`);
+  } else if (m.rate > 0.3) {
+    parts.push(`Excellent taux d'épargne (${pct(m.rate)}). Vérifiez que votre épargne de précaution est suffisante avant d'investir le surplus.`);
+  } else {
+    parts.push(`Taux d'épargne correct (${pct(m.rate)}), dans la moyenne recommandée.`);
+  }
+  const catShares = Object.entries(m.expByCat).map(([k, v]) => [k, m.expense > 0 ? v / m.expense : 0]).sort((a, b) => b[1] - a[1]);
+  const [topCat, topShare] = catShares[0] || [];
+  if (topCat && topShare > 0.4) {
+    parts.push(`« ${topCat} » représente ${pct(topShare)} de vos dépenses, une part importante à surveiller.`);
+  }
+  const unallocated = m.capacity - m.savingsTotal;
+  if (unallocated > 0) {
+    parts.push(`${eur0.format(unallocated)} de votre capacité d'épargne n'est pas encore affecté à un compte.`);
+  }
+  return parts.join(' ');
+}
 
 function AddIncomeForm({ ownerFilter, onAdd }) {
   const [label, setLabel] = useState('');
@@ -13,17 +39,18 @@ function AddIncomeForm({ ownerFilter, onAdd }) {
   function submit() {
     if (!label || !amount) return;
     onAdd({ id: uid(), label, amount, owner });
-    setLabel(''); setAmount('');
   }
 
   return (
-    <div className="toolbar" style={{ flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
-      <input className="inp" style={{ flex: '1 1 160px' }} placeholder="Source (salaire…)" value={label} onChange={(e) => setLabel(e.target.value)} />
-      <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
-        {Object.entries(OWNERS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-      </select>
-      <input className="inp num" style={{ flex: '1 1 140px' }} placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
-      <button className="btn primary" onClick={submit}>Ajouter</button>
+    <div className="card" style={{ marginBottom: 16, background: '#FBFAFF' }}>
+      <div className="toolbar" style={{ flexWrap: 'wrap', gap: 10 }}>
+        <input className="inp" style={{ flex: '1 1 160px' }} placeholder="Source (salaire…)" value={label} onChange={(e) => setLabel(e.target.value)} />
+        <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
+          {Object.entries(OWNERS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+        </select>
+        <input className="inp num" style={{ flex: '1 1 140px' }} placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <button className="btn primary" onClick={submit}>Ajouter</button>
+      </div>
     </div>
   );
 }
@@ -61,10 +88,15 @@ function IncomeRow({ item, onSave, onDelete }) {
     );
   }
   return (
-    <tr className="clickable" onClick={startEdit}>
+    <tr>
       <td data-label="Source" style={{ fontWeight: 600 }}>{item.label}</td>
       <td data-label="Montant / mois" className="r amt" style={{ color: 'var(--emerald)' }}>{eur0.format(n(item.amount))}</td>
-      <td><div className="rowact"><button className="iconbtn danger" onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}>×</button></div></td>
+      <td>
+        <div className="rowact">
+          <button className="iconbtn" title="Modifier" onClick={startEdit}><Icon name="edit" size={14} /></button>
+          <button className="iconbtn danger" title="Supprimer" onClick={() => onDelete(item.id)}><Icon name="trash" size={14} /></button>
+        </div>
+      </td>
     </tr>
   );
 }
@@ -78,20 +110,21 @@ function AddExpenseForm({ ownerFilter, onAdd }) {
   function submit() {
     if (!name || !amount) return;
     onAdd({ id: uid(), name, category, amount, owner });
-    setName(''); setAmount('');
   }
 
   return (
-    <div className="toolbar" style={{ flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
-      <input className="inp" style={{ flex: '1 1 160px' }} placeholder="Nom (loyer, Netflix…)" value={name} onChange={(e) => setName(e.target.value)} />
-      <select className="inp" style={{ flex: '0 0 160px' }} value={category} onChange={(e) => setCategory(e.target.value)}>
-        {EXPENSE_CATS.map((c) => <option key={c.key} value={c.key}>{c.key}</option>)}
-      </select>
-      <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
-        {Object.entries(OWNERS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-      </select>
-      <input className="inp num" style={{ flex: '1 1 140px' }} placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
-      <button className="btn primary" onClick={submit}>Ajouter</button>
+    <div className="card" style={{ marginBottom: 16, background: '#FBFAFF' }}>
+      <div className="toolbar" style={{ flexWrap: 'wrap', gap: 10 }}>
+        <input className="inp" style={{ flex: '1 1 160px' }} placeholder="Nom (loyer, Netflix…)" value={name} onChange={(e) => setName(e.target.value)} />
+        <select className="inp" style={{ flex: '0 0 160px' }} value={category} onChange={(e) => setCategory(e.target.value)}>
+          {EXPENSE_CATS.map((c) => <option key={c.key} value={c.key}>{c.key}</option>)}
+        </select>
+        <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
+          {Object.entries(OWNERS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+        </select>
+        <input className="inp num" style={{ flex: '1 1 140px' }} placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <button className="btn primary" onClick={submit}>Ajouter</button>
+      </div>
     </div>
   );
 }
@@ -134,11 +167,16 @@ function ExpenseRow({ item, onSave, onDelete }) {
   }
   const ci = catInfo(item.category);
   return (
-    <tr className="clickable" onClick={startEdit}>
+    <tr>
       <td data-label="Dépense" style={{ fontWeight: 600 }}>{item.name || item.category}</td>
       <td data-label="Catégorie"><span className="pill" style={{ background: ci.color + '1a', color: ci.color }}><span className="dot" style={{ background: ci.color }} />{ci.key}</span></td>
       <td data-label="Montant / mois" className="r amt" style={{ color: 'var(--rose)' }}>{eur0.format(n(item.amount))}</td>
-      <td><div className="rowact"><button className="iconbtn danger" onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}>×</button></div></td>
+      <td>
+        <div className="rowact">
+          <button className="iconbtn" title="Modifier" onClick={startEdit}><Icon name="edit" size={14} /></button>
+          <button className="iconbtn danger" title="Supprimer" onClick={() => onDelete(item.id)}><Icon name="trash" size={14} /></button>
+        </div>
+      </td>
     </tr>
   );
 }
@@ -151,21 +189,22 @@ function AddSavingForm({ accounts, ownerFilter, onAdd }) {
   function submit() {
     if (!accountId || !amount) return;
     onAdd({ id: uid(), accountId, amount, owner });
-    setAmount('');
   }
 
   return (
-    <div className="toolbar" style={{ flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
-      <select className="inp" style={{ flex: '1 1 200px' }} value={accountId} onChange={(e) => setAccountId(e.target.value)}>
-        {accounts.map((a) => (
-          <option key={a.id} value={a.id}>{a.label || TYPES[a.type]?.label}{a.bank ? ` — ${BANKS[a.bank]?.name || a.bank}` : ''}</option>
-        ))}
-      </select>
-      <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
-        {Object.entries(OWNERS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-      </select>
-      <input className="inp num" style={{ flex: '1 1 140px' }} placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
-      <button className="btn primary" onClick={submit}>Ajouter</button>
+    <div className="card" style={{ marginBottom: 16, background: '#FBFAFF' }}>
+      <div className="toolbar" style={{ flexWrap: 'wrap', gap: 10 }}>
+        <select className="inp" style={{ flex: '1 1 200px' }} value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+          {accounts.map((a) => (
+            <option key={a.id} value={a.id}>{a.label || TYPES[a.type]?.label}{a.bank ? ` — ${BANKS[a.bank]?.name || a.bank}` : ''}</option>
+          ))}
+        </select>
+        <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
+          {Object.entries(OWNERS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+        </select>
+        <input className="inp num" style={{ flex: '1 1 140px' }} placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <button className="btn primary" onClick={submit}>Ajouter</button>
+      </div>
     </div>
   );
 }
@@ -209,7 +248,7 @@ function SavingRow({ item, accounts, onSave, onDelete }) {
     );
   }
   return (
-    <tr className="clickable" onClick={startEdit}>
+    <tr>
       <td data-label="Destination" style={{ fontWeight: 600 }}>
         <span className="cellbank">
           {acc?.bank && <BankLogo bankKey={acc.bank} size={20} />}
@@ -217,7 +256,12 @@ function SavingRow({ item, accounts, onSave, onDelete }) {
         </span>
       </td>
       <td data-label="Montant / mois" className="r amt" style={{ color: 'var(--violet)' }}>{eur0.format(n(item.amount))}</td>
-      <td><div className="rowact"><button className="iconbtn danger" onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}>×</button></div></td>
+      <td>
+        <div className="rowact">
+          <button className="iconbtn" title="Modifier" onClick={startEdit}><Icon name="edit" size={14} /></button>
+          <button className="iconbtn danger" title="Supprimer" onClick={() => onDelete(item.id)}><Icon name="trash" size={14} /></button>
+        </div>
+      </td>
     </tr>
   );
 }
@@ -229,27 +273,53 @@ export default function Flow({ ownerFilter }) {
   const expenses = activeSet(state.expenses, ownerFilter);
   const savings = activeSet(state.savings, ownerFilter);
 
-  function addIncome(rec) { updateState((prev) => ({ ...prev, incomes: [...prev.incomes, rec] })); }
+  const [incFormOpen, setIncFormOpen] = useState(false);
+  const [expFormOpen, setExpFormOpen] = useState(false);
+  const [savFormOpen, setSavFormOpen] = useState(false);
+
+  function addIncome(rec) { updateState((prev) => ({ ...prev, incomes: [...prev.incomes, rec] })); setIncFormOpen(false); }
   function saveIncome(rec) { updateState((prev) => ({ ...prev, incomes: prev.incomes.map((x) => (x.id === rec.id ? rec : x)) })); }
   function delIncome(id) { updateState((prev) => ({ ...prev, incomes: prev.incomes.filter((x) => x.id !== id) })); }
 
-  function addExpense(rec) { updateState((prev) => ({ ...prev, expenses: [...prev.expenses, rec] })); }
+  function addExpense(rec) { updateState((prev) => ({ ...prev, expenses: [...prev.expenses, rec] })); setExpFormOpen(false); }
   function saveExpense(rec) { updateState((prev) => ({ ...prev, expenses: prev.expenses.map((x) => (x.id === rec.id ? rec : x)) })); }
   function delExpense(id) { updateState((prev) => ({ ...prev, expenses: prev.expenses.filter((x) => x.id !== id) })); }
 
-  function addSaving(rec) { updateState((prev) => ({ ...prev, savings: [...prev.savings, rec] })); }
+  function addSaving(rec) { updateState((prev) => ({ ...prev, savings: [...prev.savings, rec] })); setSavFormOpen(false); }
   function saveSaving(rec) { updateState((prev) => ({ ...prev, savings: prev.savings.map((x) => (x.id === rec.id ? rec : x)) })); }
   function delSaving(id) { updateState((prev) => ({ ...prev, savings: prev.savings.filter((x) => x.id !== id) })); }
 
   const reste = m.capacity - m.savingsTotal;
 
+  const revenueItems = [
+    { label: 'Dépenses', val: m.expense, color: '#F43F5E', icon: 'tag' },
+    { label: 'Épargne', val: m.savingsTotal, color: '#7C3AED', icon: 'wallet' },
+    reste >= 0
+      ? { label: 'Disponible', val: reste, color: '#10B981', icon: 'sparkles' }
+      : { label: 'Dépassement', val: -reste, color: '#F43F5E', icon: 'sparkles' },
+  ];
+  const catItems = EXPENSE_CATS.map((c) => ({ ...c, label: c.key, val: m.expByCat[c.key] || 0 })).filter((c) => c.val > 0).sort((a, b) => b.val - a.val);
+
   return (
     <>
-      <div className="card">
+      <div className="row-2">
+        <div className="card">
+          <h3>Revenus mensuels</h3>
+          <Bars items={revenueItems} total={m.income} />
+        </div>
+        <div className="card">
+          <h3>Répartition des dépenses</h3>
+          <Bars items={catItems} total={m.expense} />
+        </div>
+      </div>
+
+      <div className="card" style={{ marginTop: 18 }}>
         <div className="toolbar">
           <h3 style={{ margin: 0 }}>Revenus</h3>
+          <div className="sp" />
+          {!incFormOpen && <button className="btn primary" onClick={() => setIncFormOpen(true)}>+ Ajouter un revenu</button>}
         </div>
-        <AddIncomeForm ownerFilter={ownerFilter} onAdd={addIncome} />
+        {incFormOpen && <AddIncomeForm ownerFilter={ownerFilter} onAdd={addIncome} />}
         {incomes.length ? (
           <table className="ledger">
             <thead><tr><th>Source</th><th className="r">Montant / mois</th><th /></tr></thead>
@@ -267,8 +337,12 @@ export default function Flow({ ownerFilter }) {
       </div>
 
       <div className="card" style={{ marginTop: 18 }}>
-        <div className="toolbar"><h3 style={{ margin: 0 }}>Dépenses</h3></div>
-        <AddExpenseForm ownerFilter={ownerFilter} onAdd={addExpense} />
+        <div className="toolbar">
+          <h3 style={{ margin: 0 }}>Dépenses</h3>
+          <div className="sp" />
+          {!expFormOpen && <button className="btn primary" onClick={() => setExpFormOpen(true)}>+ Ajouter une dépense</button>}
+        </div>
+        {expFormOpen && <AddExpenseForm ownerFilter={ownerFilter} onAdd={addExpense} />}
         {expenses.length ? (
           <table className="ledger">
             <thead><tr><th>Dépense</th><th>Catégorie</th><th className="r">Montant / mois</th><th /></tr></thead>
@@ -286,11 +360,14 @@ export default function Flow({ ownerFilter }) {
       </div>
 
       <div className="card" style={{ marginTop: 18 }}>
-        <div className="toolbar"><h3 style={{ margin: 0 }}>Épargne (affectation)</h3></div>
-        <p className="hint" style={{ margin: '4px 0 14px' }}>Répartissez le reste de votre revenu vers vos comptes d'épargne.</p>
+        <div className="toolbar">
+          <h3 style={{ margin: 0 }}>Épargne (affectation)</h3>
+          <div className="sp" />
+          {state.accounts.length > 0 && !savFormOpen && <button className="btn primary" onClick={() => setSavFormOpen(true)}>+ Affecter à l'épargne</button>}
+        </div>
         {state.accounts.length ? (
           <>
-            <AddSavingForm accounts={state.accounts} ownerFilter={ownerFilter} onAdd={addSaving} />
+            {savFormOpen && <AddSavingForm accounts={state.accounts} ownerFilter={ownerFilter} onAdd={addSaving} />}
             {savings.length ? (
               <table className="ledger">
                 <thead><tr><th>Destination</th><th className="r">Montant / mois</th><th /></tr></thead>
@@ -315,17 +392,9 @@ export default function Flow({ ownerFilter }) {
         )}
       </div>
 
-      <div className="card summary-card" style={{ marginTop: 18 }}>
-        <div className="blk">
-          <div className="k">Capacité d'épargne</div>
-          <div className="v" style={{ color: m.capacity >= 0 ? 'var(--violet)' : 'var(--rose)' }}>
-            {eur0.format(m.capacity)} <span style={{ fontSize: 15, color: 'var(--muted)' }}>/ mois</span>
-          </div>
-        </div>
-        <div className="blk" style={{ textAlign: 'right' }}>
-          <div className="k">Taux d'épargne</div>
-          <div className="v">{m.income > 0 ? pct(m.rate) : '—'}</div>
-        </div>
+      <div className="card" style={{ marginTop: 18 }}>
+        <h3>Analyse</h3>
+        <p className="hint" style={{ margin: 0 }}>{flowAnalysis(m)}</p>
       </div>
     </>
   );

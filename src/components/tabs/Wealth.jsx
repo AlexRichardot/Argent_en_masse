@@ -7,6 +7,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../lib/supabaseClient';
 import BankLogo from '../BankLogo';
 import Confirm from '../Confirm';
 import Icon from '../Icon';
+import SwipeRow from '../SwipeRow';
 
 function matchSecurities(q) {
   const s = q.trim().toLowerCase();
@@ -273,21 +274,39 @@ function AccountRow({ a, isP, open, onEdit, onDelete, onToggle }) {
 
   return (
     <div className="acc-row">
-      <div className="acc-row-main">
-        {isP && <button className={`caret ${open ? 'open' : ''}`} onClick={onToggle}>›</button>}
-        {a.bank && <BankLogo bankKey={a.bank} size={20} />}
-        <span className="acc-name">{a.label || t.label}</span>
-        <span className="acc-amt">{eur0.format(accVal(a))}</span>
-      </div>
-      <div className="acc-row-meta">
-        <span className="pill" style={{ background: TIERS[tier].color + '1a', color: TIERS[tier].color }}>
-          <span className="dot" style={{ background: TIERS[tier].color }} />{t.label}
-        </span>
-        {showRate && <span className="acc-rate">{pct(acctRate(a))}</span>}
-        <div className="rowact">
-          <button className="iconbtn" title="Modifier" onClick={onEdit}><Icon name="edit" size={14} /></button>
-          <button className="iconbtn danger" title="Supprimer" onClick={onDelete}><Icon name="trash" size={14} /></button>
+      <div className="acc-d">
+        <div className="acc-row-main">
+          {isP && <button className={`caret ${open ? 'open' : ''}`} onClick={onToggle}>›</button>}
+          {a.bank && <BankLogo bankKey={a.bank} size={20} />}
+          <span className="acc-name">{a.label || t.label}</span>
+          <span className="acc-amt">{eur0.format(accVal(a))}</span>
         </div>
+        <div className="acc-row-meta">
+          <span className="pill" style={{ background: TIERS[tier].color + '1a', color: TIERS[tier].color }}>
+            <span className="dot" style={{ background: TIERS[tier].color }} />{t.label}
+          </span>
+          {showRate && <span className="acc-rate">{pct(acctRate(a))}</span>}
+          <div className="rowact">
+            <button className="iconbtn" title="Modifier" onClick={onEdit}><Icon name="edit" size={14} /></button>
+            <button className="iconbtn danger" title="Supprimer" onClick={onDelete}><Icon name="trash" size={14} /></button>
+          </div>
+        </div>
+      </div>
+      <div className="acc-m">
+        <SwipeRow onEdit={onEdit} onDelete={onDelete}>
+          <div className="acc-row-main">
+            {isP && <button className={`caret ${open ? 'open' : ''}`} onClick={onToggle}>›</button>}
+            {a.bank && <BankLogo bankKey={a.bank} size={20} />}
+            <span className="acc-name">{a.label || t.label}</span>
+            <span className="acc-amt">{eur0.format(accVal(a))}</span>
+          </div>
+          <div className="acc-row-meta">
+            <span className="pill" style={{ background: TIERS[tier].color + '1a', color: TIERS[tier].color }}>
+              <span className="dot" style={{ background: TIERS[tier].color }} />{t.label}
+            </span>
+            {showRate && <span className="acc-rate">{pct(acctRate(a))}</span>}
+          </div>
+        </SwipeRow>
       </div>
     </div>
   );

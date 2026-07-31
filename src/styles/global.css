@@ -141,6 +141,9 @@ button{font-family:inherit;cursor:pointer}input,select{font-family:inherit;font-
 .acc-row-meta{display:flex;align-items:center;gap:10px;margin-top:7px;padding-left:0}
 .acc-rate{font-size:12px;color:var(--muted)}
 .acc-row-meta .rowact{margin-left:auto;display:flex;gap:6px}
+.acc-m{display:none}
+.acc-m .acc-row-main,.acc-m .acc-row-meta{padding:13px 14px 0}
+.acc-m .acc-row-meta{padding-top:7px;padding-bottom:13px}
 .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:2px}
 .form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:6px 0}
 .form-row .inp{flex:1 1 160px}
@@ -295,6 +298,11 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
   .ledger .d-cell{display:none}
   .ledger .m-cell{display:block}
   .ledger tr.posdetail td{padding:0}
+
+  /* Comptes & épargnes -> lignes compactes avec swipe pour modifier/supprimer */
+  .acc-row{border-top:none;padding:0;margin-bottom:8px}
+  .acc-d{display:none}
+  .acc-m{display:block}
 
   /* Cibles tactiles agrandies (min. 44px recommandé) */
   .iconbtn{width:44px;height:44px}

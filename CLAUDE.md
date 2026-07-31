@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working with the project owner
+
+The owner is a complete beginner in app/software development — no coding background. When explaining anything (what changed, why, what a term means, what to check), talk to them like a teenager discovering how apps get made for the first time: plain words, no jargon, no assumed technical knowledge. If a technical concept is unavoidable, explain it in one simple sentence before using it. Don't dumb down the actual engineering decisions — just the language used to communicate them.
+
 ## Project
 
 Fyra (formerly "Patrimoine") — a personal/family finance dashboard: incomes, expenses, savings/investment accounts (including PEA/CTO stock positions), projects/deadlines, and an overview with recommendations. Up to 6 profiles per household (individual or shared), with an owner filter across all tabs. React 19 + Vite SPA, no router (tab state in `App.jsx`), backed by Supabase (auth + Postgres + one Edge Function). Deployed on Vercel. French UI/UX copy throughout — match that when adding user-facing text.

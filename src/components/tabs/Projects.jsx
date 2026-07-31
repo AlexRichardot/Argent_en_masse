@@ -3,6 +3,7 @@ import { useData } from '../../context/DataContext';
 import { computeMetrics, sortedProjects, uid, newOwnerFor } from '../../lib/metrics';
 import { eur0, fmtDate, whenLabel, n } from '../../lib/format';
 import { OWNERS } from '../../lib/catalogs';
+import Icon from '../Icon';
 
 function ProjectForm({ ownerFilter, editing, onSave, onCancel }) {
   const rec = editing || {};
@@ -18,11 +19,10 @@ function ProjectForm({ ownerFilter, editing, onSave, onCancel }) {
     const proj = { id: editing ? editing.id : uid(), label, kind, amount, owner };
     if (kind === 'echeance') { proj.date = date; proj.recur = recur; }
     onSave(proj);
-    if (!editing) { setLabel(''); setAmount(''); setDate(''); }
   }
 
   return (
-    <div className="card" style={{ marginBottom: 18 }}>
+    <div className="card" style={{ marginBottom: 18, background: '#FBFAFF' }}>
       <h3>{editing ? 'Modifier le projet' : 'Ajouter un projet'}</h3>
       <p className="hint">Taxe foncière, achat voiture, bébé…</p>
       <div className="field" style={{ marginBottom: 12 }}>
@@ -69,7 +69,7 @@ function ProjectForm({ ownerFilter, editing, onSave, onCancel }) {
       </div>
       <div style={{ display: 'flex', gap: 10 }}>
         <button className="btn primary" onClick={submit}>{editing ? 'Enregistrer' : 'Ajouter'}</button>
-        {editing && <button className="btn ghost" onClick={onCancel}>Annuler</button>}
+        <button className="btn ghost" onClick={onCancel}>Annuler</button>
       </div>
     </div>
   );
@@ -79,31 +79,34 @@ export default function Projects({ ownerFilter }) {
   const { state, updateState } = useData();
   const m = computeMetrics(state, ownerFilter);
   const arr = sortedProjects(state, ownerFilter, m.capacity);
-  const [editingId, setEditingId] = useState(null);
+  const [formMode, setFormMode] = useState(null); // null | 'new' | projectId
 
   function saveProject(proj) {
     updateState((prev) => {
       const exists = prev.projects.some((p) => p.id === proj.id);
       return { ...prev, projects: exists ? prev.projects.map((p) => (p.id === proj.id ? proj : p)) : [...prev.projects, proj] };
     });
-    setEditingId(null);
+    setFormMode(null);
   }
   function delProject(id) {
     updateState((prev) => ({ ...prev, projects: prev.projects.filter((p) => p.id !== id) }));
-    if (editingId === id) setEditingId(null);
+    if (formMode === id) setFormMode(null);
   }
-
-  const editingRecord = editingId ? arr.find((x) => x.p.id === editingId)?.p : null;
 
   return (
     <>
-      <ProjectForm key={editingId || 'new'} ownerFilter={ownerFilter} editing={editingRecord}
-        onSave={saveProject} onCancel={() => setEditingId(null)} />
       <div className="card">
-        <div className="toolbar"><h3 style={{ margin: 0 }}>Projets & échéances à venir</h3></div>
+        <div className="toolbar">
+          <h3 style={{ margin: 0 }}>Projets & échéances à venir</h3>
+          <div className="sp" />
+          {!formMode && <button className="btn primary" onClick={() => setFormMode('new')}>+ Ajouter un projet</button>}
+        </div>
         <p className="hint" style={{ margin: '4px 0 14px' }}>
-          Cliquez une ligne pour la modifier. Un <b>objectif</b> voit sa date estimée selon votre capacité d'épargne ; une <b>échéance</b> a une date fixe (ponctuelle ou récurrente).
+          Un <b>objectif</b> voit sa date estimée selon votre capacité d'épargne ; une <b>échéance</b> a une date fixe (ponctuelle ou récurrente).
         </p>
+        {formMode === 'new' && (
+          <ProjectForm ownerFilter={ownerFilter} editing={null} onSave={saveProject} onCancel={() => setFormMode(null)} />
+        )}
         {arr.length ? (
           <table className="ledger">
             <thead>
@@ -113,10 +116,19 @@ export default function Projects({ ownerFilter }) {
             </thead>
             <tbody>
               {arr.map(({ p, nd }) => {
+                if (formMode === p.id) {
+                  return (
+                    <tr key={p.id}>
+                      <td colSpan={7} style={{ padding: 0 }}>
+                        <ProjectForm ownerFilter={ownerFilter} editing={p} onSave={saveProject} onCancel={() => setFormMode(null)} />
+                      </td>
+                    </tr>
+                  );
+                }
                 const w = whenLabel(nd.date);
                 const o = OWNERS[p.owner] || OWNERS.commun;
                 return (
-                  <tr key={p.id} className="clickable" onClick={() => setEditingId(p.id)}>
+                  <tr key={p.id}>
                     <td data-label="Projet" style={{ fontWeight: 600 }}>{p.label || 'Projet'}</td>
                     <td data-label="Type">
                       <span className="pill" style={{ background: p.kind === 'objectif' ? '#EDE9FE' : '#E4F0FE', color: p.kind === 'objectif' ? '#7C3AED' : '#3B82F6' }}>
@@ -131,7 +143,12 @@ export default function Projects({ ownerFilter }) {
                     <td data-label="Date estimée">{(nd.estimated ? '≈ ' : '') + fmtDate(nd.date)}</td>
                     <td data-label="Montant" className="r amt">{eur0.format(n(p.amount))}</td>
                     <td data-label="Échéance" style={{ color: w.color, fontWeight: 600, fontSize: 12.5 }}>{w.txt}</td>
-                    <td><div className="rowact"><button className="iconbtn danger" onClick={(e) => { e.stopPropagation(); delProject(p.id); }}>×</button></div></td>
+                    <td>
+                      <div className="rowact">
+                        <button className="iconbtn" title="Modifier" onClick={() => setFormMode(p.id)}><Icon name="edit" size={14} /></button>
+                        <button className="iconbtn danger" title="Supprimer" onClick={() => delProject(p.id)}><Icon name="trash" size={14} /></button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}

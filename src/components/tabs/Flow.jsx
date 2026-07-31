@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { computeMetrics, activeSet, uid, newOwnerFor } from '../../lib/metrics';
 import { eur0, pct, n } from '../../lib/format';
-import { EXPENSE_CATS, catInfo, OWNERS, TYPES, BANKS } from '../../lib/catalogs';
+import { EXPENSE_CATS, catInfo, TYPES, BANKS } from '../../lib/catalogs';
 import BankLogo from '../BankLogo';
 import Icon from '../Icon';
 import Bars from '../Bars';
@@ -31,10 +31,10 @@ function flowAnalysis(m) {
   return parts.join(' ');
 }
 
-function AddIncomeForm({ ownerFilter, onAdd }) {
+function AddIncomeForm({ ownerFilter, profiles, onAdd }) {
   const [label, setLabel] = useState('');
   const [amount, setAmount] = useState('');
-  const [owner, setOwner] = useState(newOwnerFor(ownerFilter));
+  const [owner, setOwner] = useState(newOwnerFor(ownerFilter, profiles));
 
   function submit() {
     if (!label || !amount) return;
@@ -46,7 +46,7 @@ function AddIncomeForm({ ownerFilter, onAdd }) {
       <div className="toolbar" style={{ flexWrap: 'wrap', gap: 10 }}>
         <input className="inp" style={{ flex: '1 1 160px' }} placeholder="Source (salaire…)" value={label} onChange={(e) => setLabel(e.target.value)} />
         <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
-          {Object.entries(OWNERS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+          {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
         <input className="inp num" style={{ flex: '1 1 140px' }} placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
         <button className="btn primary" onClick={submit}>Ajouter</button>
@@ -55,7 +55,7 @@ function AddIncomeForm({ ownerFilter, onAdd }) {
   );
 }
 
-function IncomeRow({ item, onSave, onDelete }) {
+function IncomeRow({ item, profiles, onSave, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(item.label || '');
   const [amount, setAmount] = useState(item.amount ?? '');
@@ -77,7 +77,7 @@ function IncomeRow({ item, onSave, onDelete }) {
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', padding: '6px 0' }}>
             <input className="inp" style={{ flex: '1 1 160px' }} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Source" />
             <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
-              {Object.entries(OWNERS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
             <input className="inp num" style={{ flex: '0 1 140px' }} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Montant / mois" />
             <button className="btn primary" onClick={save}>Enregistrer</button>
@@ -101,11 +101,11 @@ function IncomeRow({ item, onSave, onDelete }) {
   );
 }
 
-function AddExpenseForm({ ownerFilter, onAdd }) {
+function AddExpenseForm({ ownerFilter, profiles, onAdd }) {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Logement');
-  const [owner, setOwner] = useState(newOwnerFor(ownerFilter));
+  const [owner, setOwner] = useState(newOwnerFor(ownerFilter, profiles));
 
   function submit() {
     if (!name || !amount) return;
@@ -120,7 +120,7 @@ function AddExpenseForm({ ownerFilter, onAdd }) {
           {EXPENSE_CATS.map((c) => <option key={c.key} value={c.key}>{c.key}</option>)}
         </select>
         <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
-          {Object.entries(OWNERS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+          {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
         <input className="inp num" style={{ flex: '1 1 140px' }} placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
         <button className="btn primary" onClick={submit}>Ajouter</button>
@@ -129,7 +129,7 @@ function AddExpenseForm({ ownerFilter, onAdd }) {
   );
 }
 
-function ExpenseRow({ item, onSave, onDelete }) {
+function ExpenseRow({ item, profiles, onSave, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(item.name || '');
   const [amount, setAmount] = useState(item.amount ?? '');
@@ -155,7 +155,7 @@ function ExpenseRow({ item, onSave, onDelete }) {
               {EXPENSE_CATS.map((c) => <option key={c.key} value={c.key}>{c.key}</option>)}
             </select>
             <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
-              {Object.entries(OWNERS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
             <input className="inp num" style={{ flex: '0 1 140px' }} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Montant / mois" />
             <button className="btn primary" onClick={save}>Enregistrer</button>
@@ -181,10 +181,10 @@ function ExpenseRow({ item, onSave, onDelete }) {
   );
 }
 
-function AddSavingForm({ accounts, ownerFilter, onAdd }) {
+function AddSavingForm({ accounts, ownerFilter, profiles, onAdd }) {
   const [accountId, setAccountId] = useState(accounts[0]?.id || '');
   const [amount, setAmount] = useState('');
-  const [owner, setOwner] = useState(newOwnerFor(ownerFilter));
+  const [owner, setOwner] = useState(newOwnerFor(ownerFilter, profiles));
 
   function submit() {
     if (!accountId || !amount) return;
@@ -200,7 +200,7 @@ function AddSavingForm({ accounts, ownerFilter, onAdd }) {
           ))}
         </select>
         <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
-          {Object.entries(OWNERS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+          {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
         <input className="inp num" style={{ flex: '1 1 140px' }} placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
         <button className="btn primary" onClick={submit}>Ajouter</button>
@@ -209,7 +209,7 @@ function AddSavingForm({ accounts, ownerFilter, onAdd }) {
   );
 }
 
-function SavingRow({ item, accounts, onSave, onDelete }) {
+function SavingRow({ item, accounts, profiles, onSave, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [accountId, setAccountId] = useState(item.accountId || '');
   const [amount, setAmount] = useState(item.amount ?? '');
@@ -237,7 +237,7 @@ function SavingRow({ item, accounts, onSave, onDelete }) {
               ))}
             </select>
             <select className="inp" style={{ flex: '0 0 120px' }} value={owner} onChange={(e) => setOwner(e.target.value)}>
-              {Object.entries(OWNERS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
             <input className="inp num" style={{ flex: '0 1 140px' }} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Montant / mois" />
             <button className="btn primary" onClick={save}>Enregistrer</button>
@@ -319,13 +319,13 @@ export default function Flow({ ownerFilter }) {
           <div className="sp" />
           {!incFormOpen && <button className="btn primary" onClick={() => setIncFormOpen(true)}>+ Ajouter un revenu</button>}
         </div>
-        {incFormOpen && <AddIncomeForm ownerFilter={ownerFilter} onAdd={addIncome} />}
+        {incFormOpen && <AddIncomeForm ownerFilter={ownerFilter} profiles={state.profiles} onAdd={addIncome} />}
         {incomes.length ? (
           <table className="ledger">
             <thead><tr><th>Source</th><th className="r">Montant / mois</th><th /></tr></thead>
             <tbody>
               {incomes.map((it) => (
-                <IncomeRow key={it.id} item={it} onSave={saveIncome} onDelete={delIncome} />
+                <IncomeRow key={it.id} item={it} profiles={state.profiles} onSave={saveIncome} onDelete={delIncome} />
               ))}
             </tbody>
           </table>
@@ -342,13 +342,13 @@ export default function Flow({ ownerFilter }) {
           <div className="sp" />
           {!expFormOpen && <button className="btn primary" onClick={() => setExpFormOpen(true)}>+ Ajouter une dépense</button>}
         </div>
-        {expFormOpen && <AddExpenseForm ownerFilter={ownerFilter} onAdd={addExpense} />}
+        {expFormOpen && <AddExpenseForm ownerFilter={ownerFilter} profiles={state.profiles} onAdd={addExpense} />}
         {expenses.length ? (
           <table className="ledger">
             <thead><tr><th>Dépense</th><th>Catégorie</th><th className="r">Montant / mois</th><th /></tr></thead>
             <tbody>
               {expenses.map((it) => (
-                <ExpenseRow key={it.id} item={it} onSave={saveExpense} onDelete={delExpense} />
+                <ExpenseRow key={it.id} item={it} profiles={state.profiles} onSave={saveExpense} onDelete={delExpense} />
               ))}
             </tbody>
           </table>
@@ -367,13 +367,13 @@ export default function Flow({ ownerFilter }) {
         </div>
         {state.accounts.length ? (
           <>
-            {savFormOpen && <AddSavingForm accounts={state.accounts} ownerFilter={ownerFilter} onAdd={addSaving} />}
+            {savFormOpen && <AddSavingForm accounts={state.accounts} ownerFilter={ownerFilter} profiles={state.profiles} onAdd={addSaving} />}
             {savings.length ? (
               <table className="ledger">
                 <thead><tr><th>Destination</th><th className="r">Montant / mois</th><th /></tr></thead>
                 <tbody>
                   {savings.map((s) => (
-                    <SavingRow key={s.id} item={s} accounts={state.accounts} onSave={saveSaving} onDelete={delSaving} />
+                    <SavingRow key={s.id} item={s} accounts={state.accounts} profiles={state.profiles} onSave={saveSaving} onDelete={delSaving} />
                   ))}
                 </tbody>
               </table>

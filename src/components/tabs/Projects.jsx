@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { useData } from '../../context/DataContext';
-import { computeMetrics, sortedProjects, uid, newOwnerFor } from '../../lib/metrics';
+import { computeMetrics, sortedProjects, uid, newOwnerFor, profileInfo } from '../../lib/metrics';
 import { eur0, fmtDate, whenLabel, n } from '../../lib/format';
-import { OWNERS } from '../../lib/catalogs';
 import Icon from '../Icon';
 
-function ProjectForm({ ownerFilter, editing, onSave, onCancel }) {
+function ProjectForm({ ownerFilter, profiles, editing, onSave, onCancel }) {
   const rec = editing || {};
   const [label, setLabel] = useState(rec.label || '');
   const [kind, setKind] = useState(rec.kind || 'echeance');
   const [amount, setAmount] = useState(rec.amount ?? '');
   const [date, setDate] = useState(rec.date || '');
   const [recur, setRecur] = useState(rec.recur || 'once');
-  const [owner, setOwner] = useState(rec.owner || newOwnerFor(ownerFilter));
+  const [owner, setOwner] = useState(rec.owner || newOwnerFor(ownerFilter, profiles));
 
   function submit() {
     if (!label || !amount) return;
@@ -64,7 +63,7 @@ function ProjectForm({ ownerFilter, editing, onSave, onCancel }) {
       <div className="field" style={{ marginBottom: 12 }}>
         <label>Détenteur</label>
         <select className="inp" value={owner} onChange={(e) => setOwner(e.target.value)}>
-          {Object.entries(OWNERS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+          {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
       <div style={{ display: 'flex', gap: 10 }}>
@@ -105,7 +104,7 @@ export default function Projects({ ownerFilter }) {
           Un <b>objectif</b> voit sa date estimée selon votre capacité d'épargne ; une <b>échéance</b> a une date fixe (ponctuelle ou récurrente).
         </p>
         {formMode === 'new' && (
-          <ProjectForm ownerFilter={ownerFilter} editing={null} onSave={saveProject} onCancel={() => setFormMode(null)} />
+          <ProjectForm ownerFilter={ownerFilter} profiles={state.profiles} editing={null} onSave={saveProject} onCancel={() => setFormMode(null)} />
         )}
         {arr.length ? (
           <table className="ledger">
@@ -120,13 +119,13 @@ export default function Projects({ ownerFilter }) {
                   return (
                     <tr key={p.id}>
                       <td colSpan={7} style={{ padding: 0 }}>
-                        <ProjectForm ownerFilter={ownerFilter} editing={p} onSave={saveProject} onCancel={() => setFormMode(null)} />
+                        <ProjectForm ownerFilter={ownerFilter} profiles={state.profiles} editing={p} onSave={saveProject} onCancel={() => setFormMode(null)} />
                       </td>
                     </tr>
                   );
                 }
                 const w = whenLabel(nd.date);
-                const o = OWNERS[p.owner] || OWNERS.commun;
+                const o = profileInfo(state.profiles, p.owner);
                 return (
                   <tr key={p.id}>
                     <td data-label="Projet" style={{ fontWeight: 600 }}>{p.label || 'Projet'}</td>
@@ -137,7 +136,7 @@ export default function Projects({ ownerFilter }) {
                     </td>
                     <td data-label="Détenteur">
                       <span className="owner-chip" style={{ background: o.color + '18', color: o.color }}>
-                        <span className="dot" style={{ background: o.color }} />{o.label}
+                        <span className="dot" style={{ background: o.color }} />{o.name}
                       </span>
                     </td>
                     <td data-label="Date estimée">{(nd.estimated ? '≈ ' : '') + fmtDate(nd.date)}</td>

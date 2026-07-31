@@ -1,8 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { computeMetrics, accVal, normalizeState, blankState, uid } from './metrics';
 
-function stateWith({ incomes = [], expenses = [], accounts = [], projects = [], savings = [] } = {}) {
-  return normalizeState({ incomes, expenses, accounts, projects, savings });
+const HOUSEHOLD_PROFILES = [
+  { id: 'alex', name: 'Alex', kind: 'individual', color: '#06B6D4' },
+  { id: 'lea', name: 'Léa', kind: 'individual', color: '#EC4899' },
+  { id: 'commun', name: 'Commun', kind: 'shared', color: '#8B5CF6' },
+];
+
+function stateWith({ incomes = [], expenses = [], accounts = [], projects = [], savings = [], profiles = HOUSEHOLD_PROFILES } = {}) {
+  return normalizeState({ incomes, expenses, accounts, projects, savings, profiles });
 }
 
 describe('computeMetrics', () => {

@@ -3,12 +3,44 @@ import { n } from './format';
 
 export const uid = () => Math.random().toString(36).slice(2, 9);
 
+export const MAX_PROFILES = 6;
+export const PROFILE_COLORS = ['#06B6D4', '#EC4899', '#8B5CF6', '#F59E0B', '#10B981', '#3B82F6'];
+
+const ACCENTS = { à: 'a', â: 'a', ä: 'a', é: 'e', è: 'e', ê: 'e', ë: 'e', î: 'i', ï: 'i', ô: 'o', ö: 'o', ù: 'u', û: 'u', ü: 'u', ç: 'c', ñ: 'n' };
+
+function slugify(name) {
+  const stripped = String(name).trim().toLowerCase().split('').map((ch) => ACCENTS[ch] || ch).join('');
+  return stripped.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'profil';
+}
+
+export function makeProfileId(name, existingProfiles) {
+  const base = slugify(name);
+  let id = base;
+  let n = 2;
+  while ((existingProfiles || []).some((p) => p.id === id)) {
+    id = `${base}-${n}`;
+    n += 1;
+  }
+  return id;
+}
+
+export function nextProfileColor(existingProfiles) {
+  const used = (existingProfiles || []).length;
+  return PROFILE_COLORS[used % PROFILE_COLORS.length];
+}
+
+const FALLBACK_PROFILE = { id: '', name: '—', kind: 'shared', color: '#9A97B4' };
+export function profileInfo(profiles, id) {
+  return (profiles || []).find((p) => p.id === id) || FALLBACK_PROFILE;
+}
+
 export const blankState = () => ({
   incomes: [],
   expenses: [],
   accounts: [],
   projects: [],
   savings: [],
+  profiles: [],
   ui: { ownerFilter: 'all', sortAcc: 'val', sortDetail: 'val', sortProj: 'date', sortInc: 'amount', sortExp: 'amount' },
 });
 
@@ -16,7 +48,7 @@ export const blankState = () => ({
 // (comptes/dépenses créés avec d'anciennes versions du schéma).
 export function normalizeState(raw) {
   const state = raw && typeof raw === 'object' ? { ...raw } : blankState();
-  ['incomes', 'expenses', 'accounts', 'projects', 'savings'].forEach((k) => {
+  ['incomes', 'expenses', 'accounts', 'projects', 'savings', 'profiles'].forEach((k) => {
     if (!Array.isArray(state[k])) state[k] = [];
   });
   if (!state.ui) state.ui = {};
@@ -49,14 +81,21 @@ export function normalizeState(raw) {
   return state;
 }
 
-export function matchOwner(item, ownerFilter) {
-  const o = item.owner || 'commun';
+const isSharedId = (profiles, id) => (profiles || []).some((p) => p.id === id && p.kind === 'shared');
+
+export function matchOwner(item, ownerFilter, profiles) {
+  const o = item.owner;
   if (ownerFilter === 'all') return true;
-  if (ownerFilter === 'commun') return o === 'commun';
-  return o === ownerFilter || o === 'commun';
+  if (isSharedId(profiles, ownerFilter)) return o === ownerFilter;
+  return o === ownerFilter || isSharedId(profiles, o);
 }
-export const activeSet = (arr, ownerFilter) => arr.filter((x) => matchOwner(x, ownerFilter));
-export const newOwnerFor = (ownerFilter) => (ownerFilter === 'all' ? 'commun' : ownerFilter);
+export const activeSet = (arr, ownerFilter, profiles) => arr.filter((x) => matchOwner(x, ownerFilter, profiles));
+export function newOwnerFor(ownerFilter, profiles) {
+  if (ownerFilter !== 'all') return ownerFilter;
+  const shared = (profiles || []).find((p) => p.kind === 'shared');
+  if (shared) return shared.id;
+  return profiles && profiles[0] ? profiles[0].id : '';
+}
 
 export const posValue = (a) => (a.positions || []).reduce((s, p) => s + n(p.shares) * n(p.price), 0);
 
@@ -77,10 +116,10 @@ export const classOf = (a) => {
 };
 
 export function computeMetrics(state, ownerFilter) {
-  const inc = activeSet(state.incomes, ownerFilter);
-  const exp = activeSet(state.expenses, ownerFilter);
-  const accs = activeSet(state.accounts, ownerFilter);
-  const sav = activeSet(state.savings, ownerFilter);
+  const inc = activeSet(state.incomes, ownerFilter, state.profiles);
+  const exp = activeSet(state.expenses, ownerFilter, state.profiles);
+  const accs = activeSet(state.accounts, ownerFilter, state.profiles);
+  const sav = activeSet(state.savings, ownerFilter, state.profiles);
 
   const income = inc.reduce((s, i) => s + n(i.amount), 0);
   const expense = exp.reduce((s, e) => s + n(e.amount), 0);
@@ -174,7 +213,7 @@ export function projNextDate(p, capacity) {
 }
 
 export function sortedProjects(state, ownerFilter, capacity) {
-  const arr = activeSet(state.projects, ownerFilter).map((p) => ({ p, nd: projNextDate(p, capacity) }));
+  const arr = activeSet(state.projects, ownerFilter, state.profiles).map((p) => ({ p, nd: projNextDate(p, capacity) }));
   const s = state.ui.sortProj;
   arr.sort((a, b) => {
     if (s === 'amount') return n(b.p.amount) - n(a.p.amount);
@@ -187,7 +226,7 @@ export function sortedProjects(state, ownerFilter, capacity) {
 }
 
 export function sortedAccounts(state, ownerFilter, key) {
-  const arr = activeSet(state.accounts, ownerFilter).slice();
+  const arr = activeSet(state.accounts, ownerFilter, state.profiles).slice();
   const bankLabel = (k) => k || '';
   if (key === 'bank') arr.sort((a, b) => bankLabel(a.bank).localeCompare(bankLabel(b.bank)) || accVal(b) - accVal(a));
   else if (key === 'type') arr.sort((a, b) => (TYPES[a.type]?.label || '').localeCompare(TYPES[b.type]?.label || ''));

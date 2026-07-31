@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useAuth } from './context/AuthContext';
 import { useData } from './context/DataContext';
 import AuthGate from './components/AuthGate';
+import ProfileGate from './components/ProfileGate';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import Overview from './components/tabs/Overview';
@@ -15,7 +16,7 @@ const TAB_ORDER = ['overview', 'flow', 'wealth', 'projects', 'reco'];
 
 export default function App() {
   const { session } = useAuth();
-  const { loaded } = useData();
+  const { state, loaded } = useData();
   const [tab, setTab] = useState('overview');
   const [direction, setDirection] = useState('right');
   const prevIndexRef = useRef(TAB_ORDER.indexOf('overview'));
@@ -29,6 +30,9 @@ export default function App() {
   }
   if (!loaded) {
     return <div className="empty-note" style={{ padding: 60 }}>Récupération de vos données…</div>;
+  }
+  if (!state.profiles || state.profiles.length === 0) {
+    return <ProfileGate />;
   }
 
   function changeTab(next) {

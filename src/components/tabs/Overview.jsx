@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useData } from '../../context/DataContext';
-import { computeMetrics, sortedAccounts, sortedProjects, accVal } from '../../lib/metrics';
+import { computeMetrics, sortedAccounts, sortedProjects, accVal, profileInfo } from '../../lib/metrics';
 import { eur0, pct, fmtDate, whenLabel, n } from '../../lib/format';
-import { ASSET_GROUPS, TIERS, OWNERS, TYPES } from '../../lib/catalogs';
+import { ASSET_GROUPS, TIERS, TYPES } from '../../lib/catalogs';
 import BankLogo from '../BankLogo';
 import Icon from '../Icon';
 import Bars from '../Bars';
@@ -109,7 +109,7 @@ export default function Overview({ ownerFilter }) {
           <h3>Échéances importantes</h3>
           {projs.length ? projs.map(({ p, nd }) => {
             const w = whenLabel(nd.date);
-            const o = OWNERS[p.owner] || OWNERS.commun;
+            const o = profileInfo(state.profiles, p.owner);
             return (
               <div className="ech-item" key={p.id}>
                 <div className="ech-ic" style={{ background: p.kind === 'objectif' ? '#7C3AED' : '#3B82F6' }}>
@@ -119,7 +119,7 @@ export default function Overview({ ownerFilter }) {
                   <div className="ech-t">
                     <span className="ech-label">{p.label || 'Projet'}</span>
                     <span className="owner-chip" style={{ background: o.color + '18', color: o.color }}>
-                      <span className="dot" style={{ background: o.color }} />{o.label}
+                      <span className="dot" style={{ background: o.color }} />{o.name}
                     </span>
                   </div>
                   <div className="ech-s">{(nd.estimated ? 'estimée ' : '') + fmtDate(nd.date)}</div>

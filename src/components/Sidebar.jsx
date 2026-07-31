@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import Confirm from './Confirm';
 import Icon from './Icon';
+import ProfileEditor from './ProfileEditor';
 import fyraIcon from '../assets/fyra-icon.png';
 
 const MAIN_NAV = [
@@ -15,14 +16,20 @@ const RECO_ITEM = { key: 'reco', label: 'Recommandations', icon: 'bulb' };
 
 export default function Sidebar({ tab, setTab }) {
   const { signOut } = useAuth();
-  const { flush } = useData();
+  const { state, updateState, flush } = useData();
   const [confirming, setConfirming] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [managingProfiles, setManagingProfiles] = useState(false);
 
   async function handleLogout() {
     setConfirming(false);
     await flush();
     await signOut();
+  }
+
+  function saveProfiles(profiles) {
+    updateState((prev) => ({ ...prev, profiles }));
+    setManagingProfiles(false);
   }
 
   function selectTab(key) {
@@ -65,6 +72,10 @@ export default function Sidebar({ tab, setTab }) {
       </nav>
 
       <div className="side-bottom">
+        <button className="side-menu-btn" onClick={() => setManagingProfiles(true)} style={{ marginBottom: 8 }}>
+          <Icon name="edit" size={16} />
+          <span className="lab">Gérer les profils</span>
+        </button>
         <button className="side-menu-btn" onClick={() => setConfirming(true)}>
           <Icon name="logout" size={16} />
           <span className="lab">Se déconnecter</span>
@@ -76,11 +87,26 @@ export default function Sidebar({ tab, setTab }) {
           <Icon name={RECO_ITEM.icon} size={17} />
           <span className="lab">{RECO_ITEM.label}</span>
         </button>
+        <button onClick={() => { setMoreOpen(false); setManagingProfiles(true); }}>
+          <Icon name="edit" size={16} />
+          <span className="lab">Gérer les profils</span>
+        </button>
         <button onClick={() => { setMoreOpen(false); setConfirming(true); }}>
           <Icon name="logout" size={16} />
           <span className="lab">Se déconnecter</span>
         </button>
       </div>
+
+      {managingProfiles && (
+        <div className="overlay on" style={{ position: 'fixed' }} onClick={(e) => { if (e.target === e.currentTarget) setManagingProfiles(false); }}>
+          <div className="modal" style={{ color: 'var(--ink)' }}>
+            <h2>Gérer les profils</h2>
+            <p className="lead">Renommez, ajoutez ou retirez des profils (6 maximum).</p>
+            <ProfileEditor initialProfiles={state.profiles} onSave={saveProfiles}
+              onCancel={() => setManagingProfiles(false)} cancelLabel="Fermer" saveLabel="Enregistrer" />
+          </div>
+        </div>
+      )}
 
       {confirming && (
         <Confirm

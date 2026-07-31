@@ -40,8 +40,6 @@ export const EXPENSE_CATS=[
   {key:'Santé',color:'#F43F5E',icon:'heart'},{key:'Impôts',color:'#8B5CF6',icon:'landmark'},{key:'Autres',color:'#94A3B8',icon:'tag'}
 ];
 export const catInfo=k=>EXPENSE_CATS.find(c=>c.key===k)||EXPENSE_CATS[EXPENSE_CATS.length-1];
-export const OWNERS={commun:{label:'Commun',color:'#8B5CF6'},alex:{label:'Alex',color:'#06B6D4'},lea:{label:'Léa',color:'#EC4899'}};
-export const ownerInfo=k=>OWNERS[k]||OWNERS.commun;
 export const BANKS={
   lcl:{name:'LCL',domain:'lcl.fr',color:'#0F6FC6',login:'https://monespace.lcl.fr'},
   boursobank:{name:'BoursoBank',domain:'boursobank.com',color:'#EC0677',login:'https://clients.boursobank.com'},

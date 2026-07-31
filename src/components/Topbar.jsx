@@ -1,22 +1,23 @@
-import { OWNERS } from '../lib/catalogs';
+import { useData } from '../context/DataContext';
 
 export default function Topbar({ ownerFilter, setOwnerFilter }) {
-  const opts = [
-    ['all', 'Tous', '#4B4767'],
-    ['alex', 'Alex', OWNERS.alex.color],
-    ['lea', 'Léa', OWNERS.lea.color],
-    ['commun', 'Commun', OWNERS.commun.color],
-  ];
+  const { state } = useData();
+  const profiles = state.profiles || [];
 
   return (
     <header className="topbar">
       <div className="owner-filter">
-        {opts.map(([key, label, color]) => (
-          <button key={key} className={ownerFilter === key ? 'on' : ''}
-            style={ownerFilter === key ? { background: color } : {}}
-            onClick={() => setOwnerFilter(key)}>
-            {key !== 'all' && <span className="od" style={{ background: ownerFilter === key ? '#fff' : color }} />}
-            {label}
+        <button className={ownerFilter === 'all' ? 'on' : ''}
+          style={ownerFilter === 'all' ? { background: '#4B4767' } : {}}
+          onClick={() => setOwnerFilter('all')}>
+          Tous
+        </button>
+        {profiles.map((p) => (
+          <button key={p.id} className={ownerFilter === p.id ? 'on' : ''}
+            style={ownerFilter === p.id ? { background: p.color } : {}}
+            onClick={() => setOwnerFilter(p.id)}>
+            <span className="od" style={{ background: ownerFilter === p.id ? '#fff' : p.color }} />
+            {p.name}
           </button>
         ))}
       </div>

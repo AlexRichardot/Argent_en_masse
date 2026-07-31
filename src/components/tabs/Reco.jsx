@@ -1,7 +1,6 @@
 import { useData } from '../../context/DataContext';
-import { computeMetrics } from '../../lib/metrics';
+import { computeMetrics, profileInfo } from '../../lib/metrics';
 import { pct } from '../../lib/format';
-import { ownerInfo } from '../../lib/catalogs';
 
 function buildRecommendations(m) {
   const recs = [];
@@ -51,7 +50,7 @@ export default function Reco({ ownerFilter }) {
       <div className="card" style={{ marginBottom: 16 }}>
         <h3>Votre stratégie, en fonction de vos chiffres</h3>
         <p className="hint" style={{ margin: 0 }}>
-          {ownerFilter !== 'all' ? `Vue : ${ownerInfo(ownerFilter).label}. ` : ''}
+          {ownerFilter !== 'all' ? `Vue : ${profileInfo(state.profiles, ownerFilter).name}. ` : ''}
           L'immobilier de résidence n'est pas considéré comme une sur-concentration.
         </p>
       </div>

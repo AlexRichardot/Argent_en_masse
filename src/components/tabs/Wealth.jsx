@@ -2,7 +2,7 @@ import { useState, useRef, Fragment } from 'react';
 import { useData } from '../../context/DataContext';
 import { computeMetrics, sortedAccounts, accVal, acctRate, uid, newOwnerFor } from '../../lib/metrics';
 import { eur0, pct, n, pctStr } from '../../lib/format';
-import { TYPES, TIERS, BANKS, OWNERS, SECURITIES, isPosType, defaultRate } from '../../lib/catalogs';
+import { TYPES, TIERS, BANKS, SECURITIES, isPosType, defaultRate } from '../../lib/catalogs';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../lib/supabaseClient';
 import BankLogo from '../BankLogo';
 import Confirm from '../Confirm';
@@ -158,12 +158,12 @@ function AccountPositions({ acc, updateAccount }) {
   );
 }
 
-function AccountForm({ ownerFilter, editing, onSave, onCancel }) {
+function AccountForm({ ownerFilter, profiles, editing, onSave, onCancel }) {
   const rec = editing || {};
   const [label, setLabel] = useState(rec.label || '');
   const [type, setType] = useState(rec.type || 'livret_a');
   const [bank, setBank] = useState(rec.bank || '');
-  const [owner, setOwner] = useState(rec.owner || newOwnerFor(ownerFilter));
+  const [owner, setOwner] = useState(rec.owner || newOwnerFor(ownerFilter, profiles));
   const [balance, setBalance] = useState(rec.balance ?? '');
   const [ratePct, setRatePct] = useState(rec.ratePct ?? pctStr(defaultRate(rec.type || 'livret_a')));
   const [mortgage, setMortgage] = useState(rec.mortgage ?? '');
@@ -214,7 +214,7 @@ function AccountForm({ ownerFilter, editing, onSave, onCancel }) {
       <div className="field" style={{ marginBottom: 12 }}>
         <label>Détenteur</label>
         <select className="inp" value={owner} onChange={(e) => setOwner(e.target.value)}>
-          {Object.entries(OWNERS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+          {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
 
@@ -332,7 +332,7 @@ export default function Wealth({ ownerFilter }) {
     return list.map((a) => {
       if (formMode === a.id) {
         return (
-          <AccountForm key={a.id} ownerFilter={ownerFilter} editing={a}
+          <AccountForm key={a.id} ownerFilter={ownerFilter} profiles={state.profiles} editing={a}
             onSave={saveAccount} onCancel={() => setFormMode(null)} />
         );
       }
@@ -359,7 +359,7 @@ export default function Wealth({ ownerFilter }) {
           {!formMode && <button className="btn primary" onClick={() => setFormMode('new')}>+ Ajouter une épargne</button>}
         </div>
         {formMode === 'new' && (
-          <AccountForm ownerFilter={ownerFilter} editing={null}
+          <AccountForm ownerFilter={ownerFilter} profiles={state.profiles} editing={null}
             onSave={saveAccount} onCancel={() => setFormMode(null)} />
         )}
         {accounts.length ? (

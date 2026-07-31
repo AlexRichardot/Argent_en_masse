@@ -3,7 +3,6 @@ import { useData } from '../../context/DataContext';
 import { computeMetrics, sortedAccounts, accVal, acctRate, uid, newOwnerFor } from '../../lib/metrics';
 import { eur0, pct, n, pctStr } from '../../lib/format';
 import { TYPES, TIERS, BANKS, SECURITIES, isPosType, defaultRate } from '../../lib/catalogs';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../lib/supabaseClient';
 import BankLogo from '../BankLogo';
 import Confirm from '../Confirm';
 import Icon from '../Icon';
@@ -18,25 +17,6 @@ function matchSecurities(q) {
   return SECURITIES.filter((x) => x.n.toLowerCase().includes(s) || x.t.toLowerCase().includes(s)).slice(0, 8);
 }
 
-async function fetchQuote(pos, onUpdate) {
-  if (!pos.ticker) { onUpdate({ ...pos, err: 'Indiquez un titre référencé (ticker)' }); return; }
-  onUpdate({ ...pos, loading: true, err: '' });
-  try {
-    const params = new URLSearchParams({ symbol: pos.ticker });
-    if (pos.x) params.set('exchange', pos.x);
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/quote?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY },
-    });
-    const data = await res.json();
-    if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
-    const price = Number(data.price_eur ?? data.price_native);
-    if (!isFinite(price) || price <= 0) throw new Error('cours introuvable');
-    onUpdate({ ...pos, price: Math.round(price * 100) / 100, cur: data.currency || 'EUR', native: Number(data.price_native) || price, asof: data.asof || new Date().toISOString().slice(0, 10), err: '', loading: false });
-  } catch (e) {
-    onUpdate({ ...pos, err: `Cours auto indisponible (${e.message || 'erreur'})`, loading: false });
-  }
-}
-
 function SecurityField({ pos, onChange }) {
   const [open, setOpen] = useState(false);
   const blurTimer = useRef(null);
@@ -46,7 +26,6 @@ function SecurityField({ pos, onChange }) {
     const next = { ...pos, name: sec.n, ticker: sec.t, kind: sec.k, x: sec.x };
     onChange(next);
     setOpen(false);
-    fetchQuote(next, onChange);
   }
 
   return (
@@ -101,22 +80,16 @@ function PositionRow({ pos, onChange, onRemove }) {
         </div>
         <div className="field">
           <label>Cours (€)</label>
-          <input className="inp num" inputMode="decimal" value={pos.price ?? ''} placeholder="0" disabled={pos.loading}
+          <input className="inp num" inputMode="decimal" value={pos.price ?? ''} placeholder="0"
             onChange={(e) => onChange({ ...pos, price: e.target.value })} />
         </div>
         <div className="pos-actions">
-          {pos.loading ? (
-            <button className="refresh" disabled type="button"><span className="spin" /></button>
-          ) : (
-            <button className="refresh" type="button" title="Récupérer le cours" onClick={() => fetchQuote(pos, onChange)}>↻</button>
-          )}
           <button className="remove" type="button" onClick={onRemove}>×</button>
         </div>
       </div>
-      {(metaText || pos.err || searchUrl) && (
+      {(metaText || searchUrl) && (
         <div className="pos-meta">
           {meta.reduce((acc, cur, i) => (i === 0 ? [cur] : [...acc, ' · ', cur]), [])}
-          {pos.err && <span className="err">{meta.length ? ' · ' : ''}{pos.err}</span>}
           {searchUrl && (
             <a className="link-out" href={searchUrl} target="_blank" rel="noopener" style={{ marginLeft: 6 }}>
               <Icon name="ext" size={12} /> voir le cours

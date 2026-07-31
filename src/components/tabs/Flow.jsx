@@ -32,7 +32,7 @@ function flowAnalysis(m) {
   return parts.join(' ');
 }
 
-function AddIncomeForm({ ownerFilter, profiles, onAdd }) {
+function AddIncomeForm({ ownerFilter, profiles, onAdd, onCancel }) {
   const [label, setLabel] = useState('');
   const [amount, setAmount] = useState('');
   const [owner, setOwner] = useState(newOwnerFor(ownerFilter, profiles));
@@ -51,6 +51,7 @@ function AddIncomeForm({ ownerFilter, profiles, onAdd }) {
         </select>
         <input className="inp num" placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
         <button className="btn primary" onClick={submit}>Ajouter</button>
+        <button className="btn ghost" onClick={onCancel}>Annuler</button>
       </div>
     </div>
   );
@@ -110,7 +111,7 @@ function IncomeRow({ item, profiles, onSave, onDelete }) {
   );
 }
 
-function AddExpenseForm({ ownerFilter, profiles, onAdd }) {
+function AddExpenseForm({ ownerFilter, profiles, onAdd, onCancel }) {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Logement');
@@ -133,6 +134,7 @@ function AddExpenseForm({ ownerFilter, profiles, onAdd }) {
         </select>
         <input className="inp num" placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
         <button className="btn primary" onClick={submit}>Ajouter</button>
+        <button className="btn ghost" onClick={onCancel}>Annuler</button>
       </div>
     </div>
   );
@@ -189,11 +191,11 @@ function ExpenseRow({ item, profiles, onSave, onDelete }) {
       <td className="m-cell" colSpan={4}>
         <SwipeRow onEdit={startEdit} onDelete={() => onDelete(item.id)}>
           <div className="rline">
-            <span className="rline-name">
-              <span className="rline-text">{item.name || item.category}</span>
-              <span className="pill sm" style={{ background: ci.color + '1a', color: ci.color }}>{ci.key}</span>
-            </span>
+            <span className="rline-text">{item.name || item.category}</span>
             <span className="rline-amt" style={{ color: 'var(--rose)' }}>{eur0.format(n(item.amount))}</span>
+          </div>
+          <div className="rline sub">
+            <span className="pill sm" style={{ background: ci.color + '1a', color: ci.color }}>{ci.key}</span>
           </div>
         </SwipeRow>
       </td>
@@ -201,7 +203,7 @@ function ExpenseRow({ item, profiles, onSave, onDelete }) {
   );
 }
 
-function AddSavingForm({ accounts, ownerFilter, profiles, onAdd }) {
+function AddSavingForm({ accounts, ownerFilter, profiles, onAdd, onCancel }) {
   const [accountId, setAccountId] = useState(accounts[0]?.id || '');
   const [amount, setAmount] = useState('');
   const [owner, setOwner] = useState(newOwnerFor(ownerFilter, profiles));
@@ -224,6 +226,7 @@ function AddSavingForm({ accounts, ownerFilter, profiles, onAdd }) {
         </select>
         <input className="inp num" placeholder="Montant / mois" value={amount} onChange={(e) => setAmount(e.target.value)} />
         <button className="btn primary" onClick={submit}>Ajouter</button>
+        <button className="btn ghost" onClick={onCancel}>Annuler</button>
       </div>
     </div>
   );
@@ -350,7 +353,7 @@ export default function Flow({ ownerFilter }) {
           <div className="sp" />
           {!incFormOpen && <button className="iconbtn add" title="Ajouter un revenu" onClick={() => setIncFormOpen(true)}><Icon name="plus" size={16} /></button>}
         </div>
-        {incFormOpen && <AddIncomeForm ownerFilter={ownerFilter} profiles={state.profiles} onAdd={addIncome} />}
+        {incFormOpen && <AddIncomeForm ownerFilter={ownerFilter} profiles={state.profiles} onAdd={addIncome} onCancel={() => setIncFormOpen(false)} />}
         {incomes.length ? (
           <table className="ledger">
             <thead><tr><th>Source</th><th className="r">Montant / mois</th><th /></tr></thead>
@@ -373,7 +376,7 @@ export default function Flow({ ownerFilter }) {
           <div className="sp" />
           {!expFormOpen && <button className="iconbtn add" title="Ajouter une dépense" onClick={() => setExpFormOpen(true)}><Icon name="plus" size={16} /></button>}
         </div>
-        {expFormOpen && <AddExpenseForm ownerFilter={ownerFilter} profiles={state.profiles} onAdd={addExpense} />}
+        {expFormOpen && <AddExpenseForm ownerFilter={ownerFilter} profiles={state.profiles} onAdd={addExpense} onCancel={() => setExpFormOpen(false)} />}
         {expenses.length ? (
           <table className="ledger">
             <thead><tr><th>Dépense</th><th>Catégorie</th><th className="r">Montant / mois</th><th /></tr></thead>
@@ -398,7 +401,7 @@ export default function Flow({ ownerFilter }) {
         </div>
         {state.accounts.length ? (
           <>
-            {savFormOpen && <AddSavingForm accounts={state.accounts} ownerFilter={ownerFilter} profiles={state.profiles} onAdd={addSaving} />}
+            {savFormOpen && <AddSavingForm accounts={state.accounts} ownerFilter={ownerFilter} profiles={state.profiles} onAdd={addSaving} onCancel={() => setSavFormOpen(false)} />}
             {savings.length ? (
               <table className="ledger">
                 <thead><tr><th>Destination</th><th className="r">Montant / mois</th><th /></tr></thead>

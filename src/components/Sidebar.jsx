@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import Confirm from './Confirm';
@@ -20,6 +20,18 @@ export default function Sidebar({ tab, setTab }) {
   const [confirming, setConfirming] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [managingProfiles, setManagingProfiles] = useState(false);
+  const panelRef = useRef(null);
+  const burgerRef = useRef(null);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    function onOutside(e) {
+      if (panelRef.current?.contains(e.target) || burgerRef.current?.contains(e.target)) return;
+      setMoreOpen(false);
+    }
+    document.addEventListener('mousedown', onOutside);
+    return () => document.removeEventListener('mousedown', onOutside);
+  }, [moreOpen]);
 
   async function handleLogout() {
     setConfirming(false);
@@ -44,7 +56,7 @@ export default function Sidebar({ tab, setTab }) {
           <img className="mk" src={fyraIcon} alt="" />
           <b>Fyra</b>
         </div>
-        <button className="burger-btn" onClick={() => setMoreOpen((o) => !o)} aria-label="Plus d'options">
+        <button ref={burgerRef} className="burger-btn" onClick={() => setMoreOpen((o) => !o)} aria-label="Plus d'options">
           <Icon name="more" size={20} />
         </button>
       </div>
@@ -82,7 +94,7 @@ export default function Sidebar({ tab, setTab }) {
         </button>
       </div>
 
-      <div className={`more-panel ${moreOpen ? 'open' : ''}`}>
+      <div ref={panelRef} className={`more-panel ${moreOpen ? 'open' : ''}`}>
         <button className={tab === RECO_ITEM.key ? 'active' : ''} onClick={() => selectTab(RECO_ITEM.key)}>
           <Icon name={RECO_ITEM.icon} size={17} />
           <span className="lab">{RECO_ITEM.label}</span>

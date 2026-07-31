@@ -116,6 +116,15 @@ button{font-family:inherit;cursor:pointer}input,select{font-family:inherit;font-
 .iconbtn{border:1px solid var(--line);background:#fff;border-radius:8px;width:32px;height:32px;display:grid;place-items:center;color:var(--ink2);transition:.15s}
 .iconbtn:hover{border-color:var(--violet);color:var(--violet)}
 .iconbtn.danger:hover{border-color:var(--rose);color:var(--rose);background:#FEF2F4}
+.acc-lines-wealth{display:flex;flex-direction:column}
+.acc-row{padding:10px 0;border-top:1px solid var(--line)}
+.acc-lines-wealth .acc-row:first-child{border-top:none}
+.acc-row-main{display:flex;align-items:center;gap:8px}
+.acc-name{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-amt{font-weight:600;font-variant-numeric:tabular-nums;flex:none}
+.acc-row-meta{display:flex;align-items:center;gap:10px;margin-top:7px;padding-left:0}
+.acc-rate{font-size:12px;color:var(--muted)}
+.acc-row-meta .rowact{margin-left:auto;display:flex;gap:6px}
 .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:2px}
 .toolbar .sp{margin-left:auto}
 .sortsel{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)}

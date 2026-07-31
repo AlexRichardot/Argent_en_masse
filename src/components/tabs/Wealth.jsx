@@ -264,10 +264,43 @@ function AccountForm({ ownerFilter, editing, onSave, onCancel }) {
   );
 }
 
+function AccountRow({ a, isP, open, onEdit, onDelete, onToggle }) {
+  const t = TYPES[a.type] || TYPES.autre;
+  const tier = t.tier;
+  const showRate = a.type !== 'immobilier' && !isP && acctRate(a) > 0;
+
+  return (
+    <div className="acc-row">
+      <div className="acc-row-main">
+        {isP && <button className={`caret ${open ? 'open' : ''}`} onClick={onToggle}>›</button>}
+        {a.bank && <BankLogo bankKey={a.bank} size={20} />}
+        <span className="acc-name">{a.label || t.label}</span>
+        <span className="acc-amt">{eur0.format(accVal(a))}</span>
+      </div>
+      <div className="acc-row-meta">
+        <span className="pill" style={{ background: TIERS[tier].color + '1a', color: TIERS[tier].color }}>
+          <span className="dot" style={{ background: TIERS[tier].color }} />{t.label}
+        </span>
+        {showRate && <span className="acc-rate">{pct(acctRate(a))}</span>}
+        <div className="rowact">
+          <button className="iconbtn" title="Modifier" onClick={onEdit}><Icon name="edit" size={14} /></button>
+          <button className="iconbtn danger" title="Supprimer" onClick={onDelete}><Icon name="trash" size={14} /></button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Wealth({ ownerFilter }) {
   const { state, updateState } = useData();
   const m = computeMetrics(state, ownerFilter);
   const accounts = sortedAccounts(state, ownerFilter, 'val');
+  const safeAccounts = accounts.filter((a) => !isPosType(a.type));
+  const marketAccounts = accounts.filter((a) => isPosType(a.type));
+  const safeTotal = safeAccounts.reduce((s, a) => s + accVal(a), 0);
+  const safeYield = safeAccounts.reduce((s, a) => s + (a.type === 'immobilier' ? 0 : accVal(a) * acctRate(a)), 0);
+  const marketTotal = marketAccounts.reduce((s, a) => s + accVal(a), 0);
+
   const [expanded, setExpanded] = useState(() => new Set());
   const [formMode, setFormMode] = useState(null); // null | 'new' | accountId
   const [confirmDelId, setConfirmDelId] = useState(null);
@@ -295,7 +328,27 @@ export default function Wealth({ ownerFilter }) {
     });
   }
 
-  const editingRecord = formMode && formMode !== 'new' ? accounts.find((a) => a.id === formMode) : null;
+  function renderSection(list) {
+    return list.map((a) => {
+      if (formMode === a.id) {
+        return (
+          <AccountForm key={a.id} ownerFilter={ownerFilter} editing={a}
+            onSave={saveAccount} onCancel={() => setFormMode(null)} />
+        );
+      }
+      const isP = isPosType(a.type);
+      const open = expanded.has(a.id);
+      return (
+        <Fragment key={a.id}>
+          <AccountRow a={a} isP={isP} open={open}
+            onEdit={() => setFormMode(a.id)}
+            onDelete={() => setConfirmDelId(a.id)}
+            onToggle={() => toggleExpand(a.id)} />
+          {isP && open && <AccountPositions acc={a} updateAccount={updateAccount} />}
+        </Fragment>
+      );
+    });
+  }
 
   return (
     <>
@@ -305,70 +358,39 @@ export default function Wealth({ ownerFilter }) {
           <div className="sp" />
           {!formMode && <button className="btn primary" onClick={() => setFormMode('new')}>+ Ajouter une épargne</button>}
         </div>
-        <p className="hint" style={{ margin: '4px 0 14px' }}>Cliquez une ligne pour la modifier ; la flèche déplie les titres d'un PEA/CTO.</p>
-        {formMode && (
-          <AccountForm key={formMode} ownerFilter={ownerFilter} editing={editingRecord}
+        {formMode === 'new' && (
+          <AccountForm ownerFilter={ownerFilter} editing={null}
             onSave={saveAccount} onCancel={() => setFormMode(null)} />
         )}
         {accounts.length ? (
-          <table className="ledger">
-            <thead>
-              <tr>
-                <th>Intitulé</th><th>Banque</th><th>Type</th><th className="r">Montant</th><th className="r">Taux</th><th />
-              </tr>
-            </thead>
-            <tbody>
-              {accounts.map((a) => {
-                const t = TYPES[a.type] || TYPES.autre;
-                const isP = isPosType(a.type);
-                const open = expanded.has(a.id);
-                const tier = t.tier;
-                return (
-                  <Fragment key={a.id}>
-                    <tr className="clickable" onClick={() => setFormMode(a.id)}>
-                      <td data-label="Intitulé" style={{ fontWeight: 600 }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                          {isP ? (
-                            <button className={`caret ${open ? 'open' : ''}`} onClick={(e) => { e.stopPropagation(); toggleExpand(a.id); }}>›</button>
-                          ) : (
-                            <span style={{ width: 22, height: 22, marginRight: 4, display: 'inline-block' }} />
-                          )}
-                          {a.label || t.label}
-                        </span>
-                      </td>
-                      <td data-label="Banque">{a.bank ? (
-                        <span className="cellbank"><BankLogo bankKey={a.bank} size={20} />{BANKS[a.bank]?.name || a.bank}</span>
-                      ) : <span style={{ color: 'var(--muted)' }}>—</span>}</td>
-                      <td data-label="Type">
-                        <span className="pill" style={{ background: TIERS[tier].color + '1a', color: TIERS[tier].color }}>
-                          <span className="dot" style={{ background: TIERS[tier].color }} />{t.label}
-                        </span>
-                      </td>
-                      <td data-label="Montant" className="r amt">{eur0.format(accVal(a))}</td>
-                      <td data-label="Taux" className="r" style={{ color: 'var(--muted)' }}>{a.type === 'immobilier' ? '—' : (acctRate(a) ? pct(acctRate(a)) : '—')}</td>
-                      <td>
-                        <div className="rowact">
-                          <button className="iconbtn danger" onClick={(e) => { e.stopPropagation(); setConfirmDelId(a.id); }}>×</button>
-                        </div>
-                      </td>
-                    </tr>
-                    {isP && open && (
-                      <tr className="posdetail">
-                        <td colSpan={6} onClick={(e) => e.stopPropagation()}>
-                          <AccountPositions acc={a} updateAccount={updateAccount} />
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </table>
+          <>
+            {safeAccounts.length > 0 && (
+              <div style={{ marginBottom: marketAccounts.length ? 22 : 0 }}>
+                <h4 style={{ margin: '4px 0 8px', fontFamily: 'Poppins', fontSize: 14 }}>Comptes, livrets & assurances</h4>
+                <div className="acc-lines-wealth">{renderSection(safeAccounts)}</div>
+                <div className="section-total">
+                  <span className="lbl">Sous-total{safeYield > 0 ? <> · rendement estimé <b style={{ color: 'var(--emerald)' }}>{eur0.format(safeYield)}</b> / an</> : null}</span>
+                  <span className="amt">{eur0.format(safeTotal)}</span>
+                </div>
+              </div>
+            )}
+            {marketAccounts.length > 0 && (
+              <div>
+                <h4 style={{ margin: '4px 0 8px', fontFamily: 'Poppins', fontSize: 14 }}>Investissements boursiers</h4>
+                <p className="hint" style={{ margin: '0 0 8px' }}>Pas de rendement estimé : la valeur dépend des cours du jour.</p>
+                <div className="acc-lines-wealth">{renderSection(marketAccounts)}</div>
+                <div className="section-total">
+                  <span className="lbl">Sous-total</span>
+                  <span className="amt">{eur0.format(marketTotal)}</span>
+                </div>
+              </div>
+            )}
+            <div className="section-total" style={{ borderTop: '2px solid var(--line)', marginTop: 16, paddingTop: 14 }}>
+              <span className="lbl">Patrimoine total</span>
+              <span className="amt" style={{ color: 'var(--violet)' }}>{eur0.format(m.patrimoine)}</span>
+            </div>
+          </>
         ) : <div className="empty-note">Aucun compte. Ajoutez un compte (livret, PEA, assurance-vie, immobilier…).</div>}
-        <div className="section-total">
-          <span className="lbl">Patrimoine total{m.yieldTotal > 0 ? <> · rendement estimé <b style={{ color: 'var(--emerald)' }}>{eur0.format(m.yieldTotal)}</b> / an</> : null}</span>
-          <span className="amt" style={{ color: 'var(--violet)' }}>{eur0.format(m.patrimoine)}</span>
-        </div>
       </div>
       {confirmDelId && (
         <Confirm

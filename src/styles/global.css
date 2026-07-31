@@ -19,13 +19,13 @@ button{font-family:inherit;cursor:pointer}input,select{font-family:inherit;font-
 .logo b{font-family:'Poppins';font-size:19px;font-weight:600;letter-spacing:-.01em}
 .burger-btn{display:none;border:none;background:rgba(255,255,255,.13);color:#fff;width:38px;height:38px;border-radius:var(--rs);align-items:center;justify-content:center;flex:none}
 .burger-btn:hover{background:rgba(255,255,255,.22)}
-.nav-panel{display:flex;flex-direction:column;flex:1;min-height:0}
-.menu-lbl{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#D6CBF7;padding:0 10px 9px;opacity:.75}
-.nav{display:flex;flex-direction:column;gap:3px}
+.nav{display:flex;flex-direction:column;gap:3px;flex:1;min-height:0;margin-top:14px}
 .nav button{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:none;background:transparent;color:#E7DEFB;padding:11px 13px;border-radius:var(--rs);font-size:14px;font-weight:500;transition:.15s}
 .nav button:hover{background:rgba(255,255,255,.1);color:#fff}
 .nav button.active{background:#fff;color:var(--violet);font-weight:600;box-shadow:0 6px 16px rgba(30,10,70,.18)}
 .nav button.active svg{color:var(--violet)}.nav button svg{color:#D6CBF7}
+.mobile-tabbar{display:none}
+.more-panel{display:none}
 .side-scroll{flex:1;min-height:0;overflow-y:auto;margin-top:14px}
 .banks-lbl{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#D6CBF7;padding:16px 10px 8px;opacity:.75}
 .bank-link{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--rs);color:#EADFFB;font-size:13px;font-weight:500;text-decoration:none;transition:.15s}
@@ -50,6 +50,12 @@ button{font-family:inherit;cursor:pointer}input,select{font-family:inherit;font-
 .badge{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:9px;background:var(--rose);color:#fff;font-size:10.5px;font-weight:700;display:grid;place-items:center;padding:0 5px;border:2px solid var(--bg)}
 .avatar{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-family:'Poppins';font-weight:600;background:linear-gradient(135deg,#06B6D4,#7C3AED);box-shadow:var(--shadow);border:none}
 .content{padding:6px 28px 60px}
+@media(max-width:760px){
+  @keyframes slideInRight{from{transform:translateX(18px);opacity:0}to{transform:translateX(0);opacity:1}}
+  @keyframes slideInLeft{from{transform:translateX(-18px);opacity:0}to{transform:translateX(0);opacity:1}}
+  #view.slide-right{animation:slideInRight .22s ease}
+  #view.slide-left{animation:slideInLeft .22s ease}
+}
 .card{background:var(--card);border-radius:var(--r);padding:20px;box-shadow:var(--shadow-card)}
 .card h3{font-family:'Poppins';margin:0 0 3px;font-size:16px;font-weight:600}
 .card .hint{color:var(--muted);font-size:12.5px;margin:0 0 16px}
@@ -202,10 +208,20 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
   .logo{padding:4px 0}
   .burger-btn{display:flex}
   .banks-lbl{display:none}
-  .nav-panel{display:none;flex:none}
-  .nav-panel.open{display:flex;flex-direction:column;position:absolute;top:100%;left:10px;right:10px;margin-top:8px;background:linear-gradient(165deg,#5B21B6 0%,#6D28D9 45%,#8B5CF6 100%);border-radius:var(--r);padding:14px;box-shadow:0 20px 50px rgba(30,10,70,.35);z-index:45}
+  .nav{display:none}
   .side-scroll{display:none}
-  .side-bottom{border-top:none;padding-top:8px}
+  .side-bottom{display:none}
+  .mobile-tabbar{display:flex;margin-top:10px;background:rgba(255,255,255,.12);border-radius:var(--rs);padding:4px;gap:2px}
+  .mobile-tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;color:#D6CBF7;padding:7px 2px;border-radius:7px;font-size:10.5px;font-weight:600;transition:.15s}
+  .mobile-tabbar button.active{background:#fff;color:var(--violet)}
+  .mobile-tabbar button.active svg{color:var(--violet)}
+  .mobile-tabbar button svg{color:#D6CBF7}
+  .more-panel.open{display:flex;flex-direction:column;position:absolute;top:100%;right:14px;margin-top:8px;min-width:200px;background:linear-gradient(165deg,#5B21B6 0%,#6D28D9 45%,#8B5CF6 100%);border-radius:var(--r);padding:10px;box-shadow:0 20px 50px rgba(30,10,70,.35);z-index:45;gap:3px}
+  .more-panel button{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:none;background:transparent;color:#E7DEFB;padding:11px 13px;border-radius:var(--rs);font-size:14px;font-weight:500}
+  .more-panel button:hover{background:rgba(255,255,255,.1);color:#fff}
+  .more-panel button.active{background:#fff;color:var(--violet);font-weight:600}
+  .more-panel button.active svg{color:var(--violet)}
+  .more-panel button svg{color:#D6CBF7}
   .topbar{padding:14px}
   .content{padding:4px 14px 50px}
   .owner-filter{margin-left:0;order:5;width:100%;justify-content:space-between}

@@ -5,19 +5,19 @@ import Confirm from './Confirm';
 import Icon from './Icon';
 import fyraIcon from '../assets/fyra-icon.png';
 
-const NAV = [
-  { key: 'overview', label: "Vue d'ensemble" },
-  { key: 'flow', label: 'Revenus & dépenses' },
-  { key: 'wealth', label: 'Épargne & patrimoine' },
-  { key: 'projects', label: 'Projets & échéances' },
-  { key: 'reco', label: 'Recommandations' },
+const MAIN_NAV = [
+  { key: 'overview', label: "Vue d'ensemble", short: 'Aperçu', icon: 'grid' },
+  { key: 'flow', label: 'Revenus & dépenses', short: 'Flux', icon: 'flow' },
+  { key: 'wealth', label: 'Épargne & patrimoine', short: 'Épargne', icon: 'wallet' },
+  { key: 'projects', label: 'Projets & échéances', short: 'Projets', icon: 'calendar' },
 ];
+const RECO_ITEM = { key: 'reco', label: 'Recommandations', icon: 'bulb' };
 
 export default function Sidebar({ tab, setTab }) {
   const { signOut } = useAuth();
   const { flush } = useData();
   const [confirming, setConfirming] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   async function handleLogout() {
     setConfirming(false);
@@ -27,7 +27,7 @@ export default function Sidebar({ tab, setTab }) {
 
   function selectTab(key) {
     setTab(key);
-    setMenuOpen(false);
+    setMoreOpen(false);
   }
 
   return (
@@ -37,25 +37,51 @@ export default function Sidebar({ tab, setTab }) {
           <img className="mk" src={fyraIcon} alt="" />
           <b>Fyra</b>
         </div>
-        <button className="burger-btn" onClick={() => setMenuOpen((o) => !o)} aria-label="Menu">
-          <Icon name={menuOpen ? 'close' : 'burger'} size={20} />
+        <button className="burger-btn" onClick={() => setMoreOpen((o) => !o)} aria-label="Plus d'options">
+          <Icon name="more" size={20} />
         </button>
       </div>
-      <div className={`nav-panel ${menuOpen ? 'open' : ''}`}>
-        <div className="menu-lbl">Menu</div>
-        <div className="nav">
-          {NAV.map((item) => (
-            <button key={item.key} className={tab === item.key ? 'active' : ''} onClick={() => selectTab(item.key)}>
-              <span className="lab">{item.label}</span>
-            </button>
-          ))}
-        </div>
-        <div className="side-bottom">
-          <button className="side-menu-btn" onClick={() => setConfirming(true)}>
-            <span className="lab">Se déconnecter</span>
+
+      <div className="nav">
+        {MAIN_NAV.map((item) => (
+          <button key={item.key} className={tab === item.key ? 'active' : ''} onClick={() => selectTab(item.key)}>
+            <Icon name={item.icon} size={17} />
+            <span className="lab">{item.label}</span>
           </button>
-        </div>
+        ))}
+        <button className={tab === RECO_ITEM.key ? 'active' : ''} onClick={() => selectTab(RECO_ITEM.key)}>
+          <Icon name={RECO_ITEM.icon} size={17} />
+          <span className="lab">{RECO_ITEM.label}</span>
+        </button>
       </div>
+
+      <nav className="mobile-tabbar">
+        {MAIN_NAV.map((item) => (
+          <button key={item.key} className={tab === item.key ? 'active' : ''} onClick={() => selectTab(item.key)}>
+            <Icon name={item.icon} size={18} />
+            <span>{item.short}</span>
+          </button>
+        ))}
+      </nav>
+
+      <div className="side-bottom">
+        <button className="side-menu-btn" onClick={() => setConfirming(true)}>
+          <Icon name="logout" size={16} />
+          <span className="lab">Se déconnecter</span>
+        </button>
+      </div>
+
+      <div className={`more-panel ${moreOpen ? 'open' : ''}`}>
+        <button className={tab === RECO_ITEM.key ? 'active' : ''} onClick={() => selectTab(RECO_ITEM.key)}>
+          <Icon name={RECO_ITEM.icon} size={17} />
+          <span className="lab">{RECO_ITEM.label}</span>
+        </button>
+        <button onClick={() => { setMoreOpen(false); setConfirming(true); }}>
+          <Icon name="logout" size={16} />
+          <span className="lab">Se déconnecter</span>
+        </button>
+      </div>
+
       {confirming && (
         <Confirm
           title="Se déconnecter ?"

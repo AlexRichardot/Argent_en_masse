@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from './context/AuthContext';
 import { useData } from './context/DataContext';
 import AuthGate from './components/AuthGate';
@@ -11,11 +11,14 @@ import Projects from './components/tabs/Projects';
 import Reco from './components/tabs/Reco';
 
 const TABS = { overview: Overview, flow: Flow, wealth: Wealth, projects: Projects, reco: Reco };
+const TAB_ORDER = ['overview', 'flow', 'wealth', 'projects', 'reco'];
 
 export default function App() {
   const { session } = useAuth();
   const { loaded } = useData();
   const [tab, setTab] = useState('overview');
+  const [direction, setDirection] = useState('right');
+  const prevIndexRef = useRef(TAB_ORDER.indexOf('overview'));
   const [ownerFilter, setOwnerFilter] = useState('all');
 
   if (session === undefined) {
@@ -28,15 +31,22 @@ export default function App() {
     return <div className="empty-note" style={{ padding: 60 }}>Récupération de vos données…</div>;
   }
 
+  function changeTab(next) {
+    const nextIndex = TAB_ORDER.indexOf(next);
+    setDirection(nextIndex >= prevIndexRef.current ? 'right' : 'left');
+    prevIndexRef.current = nextIndex;
+    setTab(next);
+  }
+
   const TabComponent = TABS[tab];
 
   return (
     <div className="app" id="app-root">
-      <Sidebar tab={tab} setTab={setTab} />
+      <Sidebar tab={tab} setTab={changeTab} />
       <div className="main">
         <Topbar ownerFilter={ownerFilter} setOwnerFilter={setOwnerFilter} />
         <div className="content">
-          <main id="view">
+          <main id="view" key={tab} className={`slide-${direction}`}>
             <TabComponent ownerFilter={ownerFilter} />
           </main>
         </div>

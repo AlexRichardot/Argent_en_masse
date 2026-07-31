@@ -267,7 +267,9 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
   .more-panel button svg{color:#D6CBF7}
   .topbar{padding:14px}
   .content{padding:4px 14px 50px}
-  .owner-filter{margin-left:0;order:5;width:100%;justify-content:space-between}
+  .owner-filter{margin-left:0;order:5;width:100%;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none}
+  .owner-filter::-webkit-scrollbar{display:none}
+  .owner-filter button{flex:0 0 auto}
   .pos-row{grid-template-columns:1fr}
   .pos-actions{justify-content:flex-end}
   .kind-seg button{padding:11px 7px}

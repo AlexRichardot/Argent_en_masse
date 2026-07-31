@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { computeMetrics, sortedAccounts, sortedProjects, accVal } from '../../lib/metrics';
 import { eur0, pct, fmtDate, whenLabel, n } from '../../lib/format';
-import { ASSET_GROUPS, TIERS, OWNERS, TYPES, BANKS } from '../../lib/catalogs';
+import { ASSET_GROUPS, TIERS, OWNERS, TYPES } from '../../lib/catalogs';
 import BankLogo from '../BankLogo';
 import Icon from '../Icon';
 
@@ -28,16 +29,31 @@ function Bars({ items, total }) {
   );
 }
 
+function riskAnalysis(m) {
+  if (m.patrimoine <= 0) return "Ajoutez des comptes dans « Épargne & patrimoine » pour voir votre profil de risque.";
+  const shares = Object.entries(m.classTot).map(([k, v]) => [k, v / m.patrimoine]).sort((a, b) => b[1] - a[1]);
+  const [topKey, topShare] = shares[0];
+  const label = TIERS[topKey].label.toLowerCase();
+  if (topShare > 0.6) {
+    if (topKey === 'securise') return `Patrimoine très concentré sur le ${label} (${pct(topShare)}) : rassurant, mais le rendement à long terme sera limité. Si votre horizon le permet, envisagez de diversifier vers des supports plus dynamiques.`;
+    if (topKey === 'immobilier') return `Patrimoine très concentré sur l'immobilier (${pct(topShare)}). Pensez à renforcer l'épargne financière à côté pour garder de la liquidité.`;
+    if (topKey === 'dynamique') return `Patrimoine très exposé aux marchés (${pct(topShare)}), donc plus volatil. Assurez-vous d'avoir une épargne de précaution suffisante en parallèle.`;
+    return `Patrimoine concentré sur « ${label} » (${pct(topShare)}).`;
+  }
+  return `Répartition plutôt équilibrée entre les classes d'actifs (${label} en tête avec ${pct(topShare)}) : un bon point pour lisser le risque.`;
+}
+
 export default function Overview({ ownerFilter }) {
   const { state } = useData();
   const m = computeMetrics(state, ownerFilter);
+  const [sortKey, setSortKey] = useState('val');
 
   const assetItems = Object.entries(ASSET_GROUPS)
     .map(([k, g]) => ({ ...g, val: m.assetTot[k] || 0 }))
     .filter((c) => c.val > 0)
     .sort((a, b) => b.val - a.val);
 
-  const rows = sortedAccounts(state, ownerFilter, 'val').map((a) => ({
+  const rows = sortedAccounts(state, ownerFilter, sortKey).map((a) => ({
     label: a.label || TYPES[a.type]?.label || a.type,
     bank: a.bank,
     val: accVal(a),
@@ -52,7 +68,6 @@ export default function Overview({ ownerFilter }) {
           <div className="title">Patrimoine total</div>
           <div className="cv">Valeur nette</div>
           <div className="val">{m.patrimoine !== 0 ? eur0.format(m.patrimoine) : '—'}</div>
-          {m.yieldTotal > 0 && <div className="sub">≈ {eur0.format(m.yieldTotal)} d'intérêts / an</div>}
         </div>
         <div className="kpi v2">
           <div className="title">Montant disponible</div>
@@ -75,27 +90,38 @@ export default function Overview({ ownerFilter }) {
       <div className="row-2">
         <div className="card">
           <h3>Répartition du patrimoine</h3>
-          <p className="hint">Par type d'actif.</p>
           <Bars items={assetItems} total={m.patrimoine} />
         </div>
         <div className="card">
-          <h3>Détail du patrimoine</h3>
-          <p className="hint">Par compte.</p>
+          <div className="chart-head">
+            <h3 style={{ margin: 0 }}>Détail du patrimoine</h3>
+            <div className="sortsel">
+              Trier
+              <select className="inp" style={{ width: 'auto', padding: '6px 26px 6px 10px' }} value={sortKey} onChange={(e) => setSortKey(e.target.value)}>
+                <option value="val">Montant</option>
+                <option value="label">Nom</option>
+                <option value="bank">Banque</option>
+              </select>
+            </div>
+          </div>
           {rows.length ? (
-            <table className="ledger">
-              <thead><tr><th>Compte</th><th>Banque</th><th className="r">Montant</th></tr></thead>
-              <tbody>
+            <>
+              <div className="acc-lines">
                 {rows.map((r, i) => (
-                  <tr key={i}>
-                    <td data-label="Compte" style={{ fontWeight: 600 }}>{r.label}</td>
-                    <td data-label="Banque">{r.bank ? (
-                      <span className="cellbank"><BankLogo bankKey={r.bank} size={20} />{BANKS[r.bank]?.name || r.bank}</span>
-                    ) : <span style={{ color: 'var(--muted)' }}>—</span>}</td>
-                    <td data-label="Montant" className="r amt">{eur0.format(r.val)}</td>
-                  </tr>
+                  <div className="acc-line" key={i}>
+                    <span className="cellbank">
+                      {r.bank && <BankLogo bankKey={r.bank} size={18} />}
+                      <b>{r.label}</b>
+                    </span>
+                    <span className="amt">{eur0.format(r.val)}</span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+              <div className="section-total">
+                <span className="lbl">Total</span>
+                <span className="amt" style={{ color: 'var(--violet)' }}>{eur0.format(m.patrimoine)}</span>
+              </div>
+            </>
           ) : <div className="empty-note">Ajoutez vos comptes dans « Épargne & patrimoine ».</div>}
         </div>
       </div>
@@ -103,7 +129,6 @@ export default function Overview({ ownerFilter }) {
       <div className="row-2b">
         <div className="card">
           <h3>Échéances importantes</h3>
-          <p className="hint">Qui épargne pour quoi, et pour quand.</p>
           {projs.length ? projs.map(({ p, nd }) => {
             const w = whenLabel(nd.date);
             const o = OWNERS[p.owner] || OWNERS.commun;
@@ -112,9 +137,9 @@ export default function Overview({ ownerFilter }) {
                 <div className="ech-ic" style={{ background: p.kind === 'objectif' ? '#7C3AED' : '#3B82F6' }}>
                   <Icon name={p.kind === 'objectif' ? 'target' : 'calendar'} size={18} />
                 </div>
-                <div>
+                <div className="ech-mid">
                   <div className="ech-t">
-                    {p.label || 'Projet'}
+                    <span className="ech-label">{p.label || 'Projet'}</span>
                     <span className="owner-chip" style={{ background: o.color + '18', color: o.color }}>
                       <span className="dot" style={{ background: o.color }} />{o.label}
                     </span>
@@ -131,7 +156,6 @@ export default function Overview({ ownerFilter }) {
         </div>
         <div className="card">
           <h3>Profil de risque</h3>
-          <p className="hint">Sécurité, diversification, dynamisme, immobilier.</p>
           <div className="donut-legend">
             {Object.entries(m.classTot).filter(([, v]) => v > 0).map(([k, v]) => (
               <div key={k}>
@@ -140,6 +164,7 @@ export default function Overview({ ownerFilter }) {
               </div>
             ))}
           </div>
+          <p className="hint" style={{ marginTop: 12 }}>{riskAnalysis(m)}</p>
         </div>
       </div>
     </>

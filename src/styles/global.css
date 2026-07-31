@@ -84,11 +84,19 @@ button{font-family:inherit;cursor:pointer}input,select{font-family:inherit;font-
 .ech-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
 .ech-item:last-child{border-bottom:none}
 .ech-ic{width:38px;height:38px;border-radius:10px;flex:none;display:grid;place-items:center;color:#fff}
-.ech-t{font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.ech-s{font-size:12px;color:var(--muted);margin-top:2px}
+.ech-mid{flex:1;min-width:0}
+.ech-t{font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:8px;min-width:0}
+.ech-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ech-s{font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ech-r{margin-left:auto;text-align:right;flex:none}
 .ech-amt{font-family:'Poppins';font-weight:600;font-size:14px}
 .ech-when{font-size:11.5px;margin-top:2px}
+.acc-lines{display:flex;flex-direction:column}
+.acc-line{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line)}
+.acc-line:first-child{border-top:none}
+.acc-line .cellbank{min-width:0;overflow:hidden}
+.acc-line .cellbank b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.acc-line .amt{font-weight:600;font-variant-numeric:tabular-nums;flex:none}
 .ledger{width:100%;border-collapse:collapse}
 .ledger th{text-align:left;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:0 10px 11px;white-space:nowrap}
 .ledger th.r,.ledger td.r{text-align:right}
@@ -204,6 +212,12 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
 @media(max-width:1040px){.kpis{grid-template-columns:1fr 1fr}.row-2,.row-2b{grid-template-columns:1fr}.bar-row{grid-template-columns:130px 1fr auto}}
 @media(max-width:760px){
   .app{flex-direction:column}
+  .kpis{gap:10px}
+  .kpi{padding:13px 14px}
+  .kpi .title{font-size:12.5px}
+  .kpi .cv{font-size:10.5px;margin-top:8px}
+  .kpi .val{font-size:19px}
+  .kpi .sub{font-size:10.5px}
   .sidebar{width:auto;height:auto;position:sticky;top:0;z-index:40;border-radius:0 0 var(--r) var(--r);padding:10px 14px;overflow:visible}
   .logo{padding:4px 0}
   .burger-btn{display:flex}
